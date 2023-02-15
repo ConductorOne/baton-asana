@@ -69,7 +69,7 @@ func (o *userResourceType) List(ctx context.Context, parentId *v2.ResourceId, to
 		return nil, "", nil, err
 	}
 
-	users, nextToken, _, err := o.client.GetUsers(ctx, parentId.Resource, asana.PaginationVars{Limit: ResourcesPageSize, Offset: bag.PageToken()})
+	users, nextToken, _, err := o.client.GetUsers(ctx, asana.GetUsersVars{WorkspaceId: parentId.Resource, Limit: ResourcesPageSize, Offset: bag.PageToken()})
 	if err != nil {
 		return nil, "", nil, fmt.Errorf("linear-connector: failed to list users: %w", err)
 	}
