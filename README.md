@@ -5,6 +5,7 @@ Check out [Baton](https://github.com/conductorone/baton) to learn more the proje
 # Getting Started
 
 ## Prerequisites
+
 1. Personal Acess Token. See more info [here](https://developers.asana.com/docs/personal-access-token).
 
 ## brew
@@ -34,12 +35,12 @@ baton resources
 
 # Data Model
 
-`baton-asana` will pull down information about the following Asana resources:
+`baton-asana` pulls down information about the following Asana resources:
 - Workspaces
 - Users
 - Teams
 
-# Contributing, Support and Issues
+# Contributing, Support, and Issues
 
 We started Baton because we were tired of taking screenshots and manually building spreadsheets. We welcome contributions, and ideas, no matter how small -- our goal is to make identity and permissions sprawl less painful for everyone. If you have questions, problems, or ideas: Please open a Github Issue!
 
