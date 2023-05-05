@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ConductorOne/baton-asana/pkg/connector"
+	"github.com/conductorone/baton-asana/pkg/connector"
 	"github.com/conductorone/baton-sdk/pkg/cli"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-sdk/pkg/sdk"
