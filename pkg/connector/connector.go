@@ -55,6 +55,7 @@ func (as *Asana) ResourceSyncers(ctx context.Context) []connectorbuilder.Resourc
 func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 	return &v2.ConnectorMetadata{
 		DisplayName: "Asana",
+		Description: "Connector syncing users, teams and workspaces from Asana to Baton",
 	}, nil
 }
 
