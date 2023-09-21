@@ -3,7 +3,7 @@ module github.com/conductorone/baton-asana
 go 1.20
 
 require (
-	github.com/conductorone/baton-sdk v0.1.0
+	github.com/conductorone/baton-sdk v0.1.5
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/spf13/cobra v1.7.0
 	go.uber.org/zap v1.24.0
@@ -69,6 +69,7 @@ require (
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
