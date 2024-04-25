@@ -71,7 +71,7 @@ func (o *teamResourceType) List(ctx context.Context, parentId *v2.ResourceId, to
 
 	teams, nextToken, _, err := o.client.GetTeams(ctx, asana.GetTeamsVars{WorkspaceId: parentId.Resource, Offset: bag.PageToken(), Limit: ResourcesPageSize})
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("linear-connector: failed to list teams: %w", err)
+		return nil, "", nil, fmt.Errorf("asana-connector: failed to list teams: %w", err)
 	}
 
 	pageToken, err := bag.NextToken(nextToken)
