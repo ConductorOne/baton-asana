@@ -81,8 +81,13 @@ func New(ctx context.Context, accessToken string) (*Asana, error) {
 		return nil, err
 	}
 
+	uhttpClient, err := uhttp.NewBaseHttpClientWithContext(ctx, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Asana{
-		client:            asana.NewClient(accessToken, httpClient),
+		client:            asana.NewClient(accessToken, uhttpClient),
 		allowedWorkspaces: &allowedWorkspaces,
 	}, nil
 }

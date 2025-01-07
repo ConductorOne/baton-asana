@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,7 +13,7 @@ import (
 const BaseUrl = "https://app.asana.com/api/1.0"
 
 type Client struct {
-	httpClient  *http.Client
+	httpClient  *uhttp.BaseHttpClient
 	accessToken string
 }
 
@@ -68,7 +69,7 @@ type TeamsResponse struct {
 	NextPage PaginationData `json:"next_page"`
 }
 
-func NewClient(accessToken string, httpClient *http.Client) *Client {
+func NewClient(accessToken string, httpClient *uhttp.BaseHttpClient) *Client {
 	return &Client{
 		accessToken: accessToken,
 		httpClient:  httpClient,

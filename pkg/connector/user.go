@@ -2,7 +2,6 @@ package connector
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/conductorone/baton-asana/pkg/asana"
@@ -72,7 +71,7 @@ func (o *userResourceType) List(ctx context.Context, parentId *v2.ResourceId, to
 
 	users, nextToken, _, err := o.client.GetUsers(ctx, asana.GetUsersVars{WorkspaceId: parentId.Resource, Limit: ResourcesPageSize, Offset: bag.PageToken()})
 	if err != nil {
-		return nil, "", nil, fmt.Errorf("linear-connector: failed to list users: %w", err)
+		return nil, "", nil, err
 	}
 
 	pageToken, err := bag.NextToken(nextToken)
