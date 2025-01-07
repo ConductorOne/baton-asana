@@ -45,3 +45,7 @@ type TeamMembership struct {
 	IsGuest         bool   `json:"is_guest"`
 	IsLimitedAccess bool   `json:"is_limited_access"`
 }
+
+type baseMutationBody struct {
+	Data any `json:"data"`
+}

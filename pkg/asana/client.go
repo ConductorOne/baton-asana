@@ -272,3 +272,143 @@ func (c *Client) AuthCheck(ctx context.Context) ([]WorkspaceMembership, error) {
 
 	return res.Data, nil
 }
+
+// AddUserToWorkspace adds a user to a workspace.
+func (c *Client) AddUserToWorkspace(ctx context.Context, workspaceId, userId string) error {
+	addUserToWorkspaceUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s/addUser", workspaceId))
+	if err != nil {
+		return err
+	}
+
+	body := baseMutationBody{
+		Data: struct {
+			User string `json:"user"`
+		}{
+			User: userId,
+		},
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPost,
+		addUserToWorkspaceUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(body),
+	)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// RemoveUserToWorkspace removes a user from a workspace.
+func (c *Client) RemoveUserToWorkspace(ctx context.Context, workspaceId, userId string) error {
+	removeUserToWorkspaceUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s/removeUser", workspaceId))
+	if err != nil {
+		return err
+	}
+
+	body := baseMutationBody{
+		Data: struct {
+			User string `json:"user"`
+		}{
+			User: userId,
+		},
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPost,
+		removeUserToWorkspaceUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(body),
+	)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// AddUserToTeam adds a user to a team.
+func (c *Client) AddUserToTeam(ctx context.Context, workspaceId, userId string) error {
+	addUserToTeamUrl, err := getPath(BaseUrl, fmt.Sprintf("/teams/%s/addUser", workspaceId))
+	if err != nil {
+		return err
+	}
+
+	body := baseMutationBody{
+		Data: struct {
+			User string `json:"user"`
+		}{
+			User: userId,
+		},
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPost,
+		addUserToTeamUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(body),
+	)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// RemoveUserToTeam removes a user to a team.
+func (c *Client) RemoveUserToTeam(ctx context.Context, workspaceId, userId string) error {
+	removesUserToTeamUrl, err := getPath(BaseUrl, fmt.Sprintf("/teams/%s/removeUser", workspaceId))
+	if err != nil {
+		return err
+	}
+
+	body := baseMutationBody{
+		Data: struct {
+			User string `json:"user"`
+		}{
+			User: userId,
+		},
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPost,
+		removesUserToTeamUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(body),
+	)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
