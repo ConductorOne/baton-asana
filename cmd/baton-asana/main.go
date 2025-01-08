@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/conductorone/baton-sdk/pkg/field"
 	"github.com/spf13/viper"
-	"os"
 
 	"github.com/conductorone/baton-asana/pkg/connector"
 	"github.com/conductorone/baton-sdk/pkg/config"

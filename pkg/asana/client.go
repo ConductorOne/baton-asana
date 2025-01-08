@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/conductorone/baton-sdk/pkg/uhttp"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/conductorone/baton-sdk/pkg/uhttp"
 )
 
 const BaseUrl = "https://app.asana.com/api/1.0"
