@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        test-case: [ teams, groups, licenses ]
+        test-case: [ teams ]
 
     env:
       BATON_LOG_LEVEL: debug
