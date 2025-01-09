@@ -345,8 +345,8 @@ func (c *Client) RemoveUserToWorkspace(ctx context.Context, workspaceId, userId 
 }
 
 // AddUserToTeam adds a user to a team.
-func (c *Client) AddUserToTeam(ctx context.Context, workspaceId, userId string) error {
-	addUserToTeamUrl, err := getPath(BaseUrl, fmt.Sprintf("/teams/%s/addUser", workspaceId))
+func (c *Client) AddUserToTeam(ctx context.Context, teamId, userId string) error {
+	addUserToTeamUrl, err := getPath(BaseUrl, fmt.Sprintf("/teams/%s/addUser", teamId))
 	if err != nil {
 		return err
 	}
@@ -380,8 +380,8 @@ func (c *Client) AddUserToTeam(ctx context.Context, workspaceId, userId string) 
 }
 
 // RemoveUserToTeam removes a user to a team.
-func (c *Client) RemoveUserToTeam(ctx context.Context, workspaceId, userId string) error {
-	removesUserToTeamUrl, err := getPath(BaseUrl, fmt.Sprintf("/teams/%s/removeUser", workspaceId))
+func (c *Client) RemoveUserToTeam(ctx context.Context, teamId, userId string) error {
+	removesUserToTeamUrl, err := getPath(BaseUrl, fmt.Sprintf("/teams/%s/removeUser", teamId))
 	if err != nil {
 		return err
 	}
