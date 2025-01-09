@@ -161,7 +161,7 @@ func (o *teamResourceType) Grants(ctx context.Context, resource *v2.Resource, to
 }
 
 func (o *teamResourceType) Grant(ctx context.Context, resource *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
-	if resource.Id.ResourceType == resourceTypeTeam.Id {
+	if resource.Id.ResourceType == resourceTypeUser.Id {
 		teamId := entitlement.Resource.Id.Resource
 		userId := resource.Id.Resource
 
@@ -195,7 +195,7 @@ func (o *teamResourceType) Grant(ctx context.Context, resource *v2.Resource, ent
 }
 
 func (o *teamResourceType) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {
-	if grant.Principal.Id.ResourceType == resourceTypeTeam.Id {
+	if grant.Principal.Id.ResourceType == resourceTypeUser.Id {
 		teamId := grant.Entitlement.Resource.Id.Resource
 		userId := grant.Principal.Id.Resource
 
@@ -203,6 +203,8 @@ func (o *teamResourceType) Revoke(ctx context.Context, grant *v2.Grant) (annotat
 		if err != nil {
 			return nil, err
 		}
+
+		return nil, nil
 	}
 
 	return nil, fmt.Errorf("baton-asana: revoke not implemented resource type %s", grant.Principal.Id.ResourceType)
