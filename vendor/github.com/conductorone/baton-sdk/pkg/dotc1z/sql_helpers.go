@@ -6,16 +6,17 @@ import (
 	"strconv"
 	"time"
 
-	c1zpb "github.com/conductorone/baton-sdk/pb/c1/c1z/v1"
-	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/doug-martin/goqu/v9"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	c1zpb "github.com/conductorone/baton-sdk/pb/c1/c1z/v1"
+	"github.com/conductorone/baton-sdk/pkg/annotations"
+
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 )
 
-const maxPageSize = 100
+const maxPageSize = 10000
 
 var allTableDescriptors = []tableDescriptor{
 	resourceTypes,
@@ -59,13 +60,18 @@ type hasEntitlementListRequest interface {
 	GetEntitlement() *v2.Entitlement
 }
 
+type hasPrincipalIdListRequest interface {
+	listRequest
+	GetPrincipalId() *v2.ResourceId
+}
+
 type protoHasID interface {
 	proto.Message
 	GetId() string
 }
 
-// listConnectorObjects uses a connecter list request to fetch the corresponding data from the local db.
-// It returns the raw bytes that need to be unmarshaled into the correct proto message.
+// listConnectorObjects uses a connector list request to fetch the corresponding data from the local db.
+// It returns the raw bytes that need to be unmarshalled into the correct proto message.
 func (c *C1File) listConnectorObjects(ctx context.Context, tableName string, req proto.Message) ([][]byte, string, error) {
 	err := c.validateDb(ctx)
 	if err != nil {
@@ -114,22 +120,36 @@ func (c *C1File) listConnectorObjects(ctx context.Context, tableName string, req
 		if rt != "" {
 			q = q.Where(goqu.C("resource_type_id").Eq(rt))
 		}
-	} else if resourceIdReq, ok := req.(hasResourceIdListRequest); ok {
+	}
+
+	if resourceIdReq, ok := req.(hasResourceIdListRequest); ok {
 		r := resourceIdReq.GetResourceId()
 		if r != nil && r.Resource != "" {
 			q = q.Where(goqu.C("resource_id").Eq(r.Resource))
 			q = q.Where(goqu.C("resource_type_id").Eq(r.ResourceType))
 		}
-	} else if resourceReq, ok := req.(hasResourceListRequest); ok {
+	}
+
+	if resourceReq, ok := req.(hasResourceListRequest); ok {
 		r := resourceReq.GetResource()
 		if r != nil {
 			q = q.Where(goqu.C("resource_id").Eq(r.Id.Resource))
 			q = q.Where(goqu.C("resource_type_id").Eq(r.Id.ResourceType))
 		}
-	} else if entitlementReq, ok := req.(hasEntitlementListRequest); ok {
+	}
+
+	if entitlementReq, ok := req.(hasEntitlementListRequest); ok {
 		e := entitlementReq.GetEntitlement()
 		if e != nil {
 			q = q.Where(goqu.C("entitlement_id").Eq(e.Id))
+		}
+	}
+
+	if principalIdReq, ok := req.(hasPrincipalIdListRequest); ok {
+		p := principalIdReq.GetPrincipalId()
+		if p != nil {
+			q = q.Where(goqu.C("principal_resource_id").Eq(p.Resource))
+			q = q.Where(goqu.C("principal_resource_type_id").Eq(p.ResourceType))
 		}
 	}
 
@@ -163,7 +183,7 @@ func (c *C1File) listConnectorObjects(ctx context.Context, tableName string, req
 	}
 
 	// Clamp the page size
-	pageSize := int(listReq.GetPageSize())
+	pageSize := listReq.GetPageSize()
 	if pageSize > maxPageSize || pageSize == 0 {
 		pageSize = maxPageSize
 	}
@@ -186,7 +206,7 @@ func (c *C1File) listConnectorObjects(ctx context.Context, tableName string, req
 	}
 	defer rows.Close()
 
-	count := 0
+	var count uint32 = 0
 	lastRow := 0
 	for rows.Next() {
 		count++
@@ -211,37 +231,76 @@ func (c *C1File) listConnectorObjects(ctx context.Context, tableName string, req
 	return ret, nextPageToken, nil
 }
 
-func (c *C1File) putConnectorObjectQuery(ctx context.Context, tableName string, m proto.Message, fields goqu.Record) (string, []interface{}, error) {
+var protoMarshaler = proto.MarshalOptions{Deterministic: true}
+
+func bulkPutConnectorObject[T proto.Message](ctx context.Context, c *C1File,
+	tableName string,
+	extractFields func(m T) (goqu.Record, error),
+	msgs ...T) error {
+	if len(msgs) == 0 {
+		return nil
+	}
+
 	err := c.validateSyncDb(ctx)
 	if err != nil {
-		return "", nil, err
+		return err
 	}
 
-	messageBlob, err := proto.MarshalOptions{Deterministic: true}.Marshal(m)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if fields == nil {
-		fields = goqu.Record{}
-	}
-
-	if _, idSet := fields["external_id"]; !idSet {
-		idGetter, ok := m.(protoHasID)
-		if !ok {
-			return "", nil, fmt.Errorf("unable to get ID for object")
+	rows := make([]*goqu.Record, len(msgs))
+	for i, m := range msgs {
+		messageBlob, err := protoMarshaler.Marshal(m)
+		if err != nil {
+			return err
 		}
-		fields["external_id"] = idGetter.GetId()
+
+		fields, err := extractFields(m)
+		if err != nil {
+			return err
+		}
+		if fields == nil {
+			fields = goqu.Record{}
+		}
+
+		if _, idSet := fields["external_id"]; !idSet {
+			idGetter, ok := any(m).(protoHasID)
+			if !ok {
+				return fmt.Errorf("unable to get ID for object")
+			}
+			fields["external_id"] = idGetter.GetId()
+		}
+		fields["data"] = messageBlob
+		fields["sync_id"] = c.currentSyncID
+		fields["discovered_at"] = time.Now().Format("2006-01-02 15:04:05.999999999")
+		rows[i] = &fields
 	}
-	fields["data"] = messageBlob
-	fields["sync_id"] = c.currentSyncID
-	fields["discovered_at"] = time.Now().Format("2006-01-02 15:04:05.999999999")
+	chunkSize := 100
+	chunks := len(rows) / chunkSize
+	if len(rows)%chunkSize != 0 {
+		chunks++
+	}
 
-	q := c.db.Insert(tableName).Prepared(true)
-	q = q.Rows(fields)
-	q = q.OnConflict(goqu.DoUpdate("external_id, sync_id", goqu.C("data").Set(goqu.I("EXCLUDED.data"))))
+	for i := 0; i < chunks; i++ {
+		start := i * chunkSize
+		end := (i + 1) * chunkSize
+		if end > len(rows) {
+			end = len(rows)
+		}
+		chunkedRows := rows[start:end]
+		query, args, err := c.db.Insert(tableName).
+			OnConflict(goqu.DoUpdate("external_id, sync_id", goqu.C("data").Set(goqu.I("EXCLUDED.data")))).
+			Rows(chunkedRows).
+			Prepared(true).
+			ToSQL()
+		if err != nil {
+			return err
+		}
+		_, err = c.db.Exec(query, args...)
+		if err != nil {
+			return err
+		}
+	}
 
-	return q.ToSQL()
+	return nil
 }
 
 func (c *C1File) getResourceObject(ctx context.Context, resourceID *v2.ResourceId, m *v2.Resource, syncID string) error {

@@ -2,7 +2,12 @@ package connector
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/conductorone/baton-asana/pkg/asana"
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
@@ -154,4 +159,64 @@ func (o *workspaceResourceType) Grants(ctx context.Context, resource *v2.Resourc
 	}
 
 	return rv, pageToken, nil, nil
+}
+
+func (o *workspaceResourceType) Grant(ctx context.Context, resource *v2.Resource, entitlement *v2.Entitlement) ([]*v2.Grant, annotations.Annotations, error) {
+	if resource.Id.ResourceType == resourceTypeUser.Id {
+		workspaceId := entitlement.Resource.Id.Resource
+		userId := resource.Id.Resource
+
+		err := o.client.AddUserToWorkspace(ctx, workspaceId, userId)
+		if err != nil {
+			if status.Code(err) == codes.PermissionDenied {
+				return nil, nil, errors.Join(err, errors.New("user does not have permission to add user to workspace or the user was previous removed from the workspace"))
+			}
+
+			return nil, nil, err
+		}
+
+		workspaceEntitlement, err := getWorkspaceEntitlement(entitlement)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		userRsId, err := rs.NewResourceID(resourceTypeUser, userId)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		rv := []*v2.Grant{
+			grant.NewGrant(resource, workspaceEntitlement, userRsId),
+		}
+
+		return rv, nil, nil
+	}
+
+	return nil, nil, fmt.Errorf("invalid resource type %s", resource.Id.ResourceType)
+}
+
+func (o *workspaceResourceType) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {
+	if grant.Principal.Id.ResourceType == resourceTypeUser.Id {
+		workspaceId := grant.Entitlement.Resource.Id.Resource
+		userId := grant.Principal.Id.Resource
+
+		err := o.client.RemoveUserToWorkspace(ctx, workspaceId, userId)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+
+	return nil, fmt.Errorf("invalid resource type %s", grant.Principal.Id.ResourceType)
+}
+
+func getWorkspaceEntitlement(entitlement *v2.Entitlement) (string, error) {
+	id := strings.Split(entitlement.Id, ":")
+
+	if len(id) != 3 {
+		return "", fmt.Errorf("invalid entitlement id: %s", entitlement.Id)
+	}
+
+	return id[2], nil
 }

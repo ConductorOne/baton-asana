@@ -63,7 +63,7 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 func (as *Asana) Validate(ctx context.Context) (annotations.Annotations, error) {
 	workspaceMemberships, err := as.client.AuthCheck(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("linear-connector: failed to authenticate. Error: %w", err)
+		return nil, fmt.Errorf("baton-asana: failed to authenticate. Error: %w", err)
 	}
 
 	for _, workspaceMembership := range workspaceMemberships {
@@ -81,8 +81,13 @@ func New(ctx context.Context, accessToken string) (*Asana, error) {
 		return nil, err
 	}
 
+	uhttpClient, err := uhttp.NewBaseHttpClientWithContext(ctx, httpClient)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Asana{
-		client:            asana.NewClient(accessToken, httpClient),
+		client:            asana.NewClient(accessToken, uhttpClient),
 		allowedWorkspaces: &allowedWorkspaces,
 	}, nil
 }

@@ -18,8 +18,8 @@ jobs:
   go-test:
     strategy:
       matrix:
-        go-version: [1.22.x]
-        platform: [ubuntu-latest]
+        go-version: [ 1.22.x ]
+        platform: [ ubuntu-latest ]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Install Go
@@ -36,3 +36,40 @@ jobs:
         uses: guyarb/golang-test-annotations@v0.5.1
         with:
           test-results: test.json
+
+  test-provisioning:
+    needs:
+      - go-lint
+      - go-test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        test-case: [ teams ]
+
+    env:
+      BATON_LOG_LEVEL: debug
+
+      CONNECTOR_PRINCIPAL: "${{ secrets.CONNECTOR_PRINCIPAL }}"
+      BATON_TOKEN: "${{ secrets.BATON_TOKEN }}"
+
+      BATON_CONNECTOR: ./baton-asana
+
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.x
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install baton
+        run: ./scripts/get-baton.sh && mv baton /usr/local/bin
+      - name: Build baton-asana
+        run: go build ./cmd/baton-asana
+      - name: Run tests for ${{ matrix.test-case }}
+        run: |
+          case "${{ matrix.test-case }}" in
+            "teams")
+              ./scripts/validate-grant.sh ${{ env.CONNECTOR_PRINCIPAL }} user 'team:1209110572131887:Team Member' 'team:1209110572131887:Team Member:${{ env.CONNECTOR_PRINCIPAL }}'
+              ;;
+          esac

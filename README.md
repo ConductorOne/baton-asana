@@ -1,4 +1,7 @@
-`baton-asana` is a connector for Asana built using the [Baton SDK](https://github.com/conductorone/baton-sdk). It communicates with the Asana API to sync data about workspaces, users, and teams.
+# baton-asana [![Go Reference](https://pkg.go.dev/badge/github.com/conductorone/baton-asana.svg)](https://pkg.go.dev/github.com/conductorone/baton-asana) ![main ci](https://github.com/conductorone/baton-asana/actions/workflows/main.yaml/badge.svg)
+
+`baton-asana` is a connector for Asana built using the [Baton SDK](https://github.com/conductorone/baton-sdk). It
+communicates with the Asana API to sync data about workspaces, users, and teams.
 
 Check out [Baton](https://github.com/conductorone/baton) to learn more the project in general.
 
@@ -36,13 +39,16 @@ baton resources
 # Data Model
 
 `baton-asana` pulls down information about the following Asana resources:
+
 - Workspaces
 - Users
 - Teams
 
 # Contributing, Support, and Issues
 
-We started Baton because we were tired of taking screenshots and manually building spreadsheets. We welcome contributions, and ideas, no matter how small -- our goal is to make identity and permissions sprawl less painful for everyone. If you have questions, problems, or ideas: Please open a Github Issue!
+We started Baton because we were tired of taking screenshots and manually building spreadsheets. We welcome
+contributions, and ideas, no matter how small -- our goal is to make identity and permissions sprawl less painful for
+everyone. If you have questions, problems, or ideas: Please open a Github Issue!
 
 See [CONTRIBUTING.md](https://github.com/ConductorOne/baton/blob/main/CONTRIBUTING.md) for more details.
 
