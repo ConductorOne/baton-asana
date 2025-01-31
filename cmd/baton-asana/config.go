@@ -11,7 +11,7 @@ var (
 	TokenField = field.StringField(
 		"token",
 		field.WithRequired(true),
-		field.WithDescription("Your workato API key"),
+		field.WithDescription("Your Asana API key"),
 	)
 
 	// ConfigurationFields defines the external configuration required for the

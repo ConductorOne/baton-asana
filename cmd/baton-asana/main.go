@@ -23,7 +23,7 @@ func main() {
 
 	_, cmd, err := config.DefineConfiguration(
 		ctx,
-		"baton-workato",
+		"baton-asana",
 		getConnector,
 		field.Configuration{
 			Fields: ConfigurationFields,
