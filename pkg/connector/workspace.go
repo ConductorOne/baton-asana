@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -13,10 +14,11 @@ import (
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
 	"github.com/conductorone/baton-sdk/pkg/pagination"
-
 	ent "github.com/conductorone/baton-sdk/pkg/types/entitlement"
 	grant "github.com/conductorone/baton-sdk/pkg/types/grant"
 	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
 )
 
 const (
@@ -32,20 +34,20 @@ var workspaceRoles = []string{
 }
 
 type workspaceResourceType struct {
-	resourceType      *v2.ResourceType
-	client            *asana.Client
-	allowedWorkspaces *[]string
+	resourceType           *v2.ResourceType
+	client                 *asana.Client
+	allowedWorkspaces      []string
+	allowedWorkspacesMutex sync.Mutex
 }
 
 func (o *workspaceResourceType) ResourceType(_ context.Context) *v2.ResourceType {
 	return o.resourceType
 }
 
-func workspaceBuilder(client *asana.Client, allowedWorkspaces *[]string) *workspaceResourceType {
+func workspaceBuilder(client *asana.Client) *workspaceResourceType {
 	return &workspaceResourceType{
-		resourceType:      resourceTypeWorkspace,
-		client:            client,
-		allowedWorkspaces: allowedWorkspaces,
+		resourceType: resourceTypeWorkspace,
+		client:       client,
 	}
 }
 
@@ -74,13 +76,43 @@ func workspaceResource(ctx context.Context, workspace asana.Workspace) (*v2.Reso
 	return ret, nil
 }
 
-func (o *workspaceResourceType) List(ctx context.Context, resourceId *v2.ResourceId, pt *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
-	if o.allowedWorkspaces == nil {
-		return nil, "", nil, nil
+func (o *workspaceResourceType) loadAllowedWorkspaces(ctx context.Context) error {
+	o.allowedWorkspacesMutex.Lock()
+	defer o.allowedWorkspacesMutex.Unlock()
+
+	if o.allowedWorkspaces != nil {
+		return nil
 	}
 
-	rv := make([]*v2.Resource, 0, len(*o.allowedWorkspaces))
-	for _, workspaceId := range *o.allowedWorkspaces {
+	l := ctxzap.Extract(ctx)
+
+	o.allowedWorkspaces = []string{}
+	workspaceMemberships, err := o.client.AuthCheck(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, workspaceMembership := range workspaceMemberships {
+		if !workspaceMembership.IsGuest {
+			o.allowedWorkspaces = append(o.allowedWorkspaces, workspaceMembership.Workspace.Gid)
+		}
+	}
+
+	l.Debug("baton-asana: loaded allowed workspaces", zap.Any("allowedWorkspaces", o.allowedWorkspaces))
+
+	return nil
+}
+
+func (o *workspaceResourceType) List(ctx context.Context, resourceId *v2.ResourceId, pt *pagination.Token) ([]*v2.Resource, string, annotations.Annotations, error) {
+	if o.allowedWorkspaces == nil {
+		err := o.loadAllowedWorkspaces(ctx)
+		if err != nil {
+			return nil, "", nil, err
+		}
+	}
+
+	rv := make([]*v2.Resource, 0, len(o.allowedWorkspaces))
+	for _, workspaceId := range o.allowedWorkspaces {
 		workspaceInfo, _, err := o.client.GetWorkspace(ctx, workspaceId)
 		if err != nil {
 			return nil, "", nil, err
