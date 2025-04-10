@@ -85,7 +85,6 @@ func (o *workspaceResourceType) loadAllowedWorkspaces(ctx context.Context) error
 	}
 
 	l := ctxzap.Extract(ctx)
-	l.Info("baton-asana: loading allowed workspaces")
 
 	o.allowedWorkspaces = []string{}
 	workspaceMemberships, err := o.client.AuthCheck(ctx)
@@ -99,7 +98,7 @@ func (o *workspaceResourceType) loadAllowedWorkspaces(ctx context.Context) error
 		}
 	}
 
-	l.Info("baton-asana: loaded allowed workspaces", zap.Any("allowedWorkspaces", o.allowedWorkspaces))
+	l.Debug("baton-asana: loaded allowed workspaces", zap.Any("allowedWorkspaces", o.allowedWorkspaces))
 
 	return nil
 }
