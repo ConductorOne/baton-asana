@@ -17,8 +17,6 @@ import (
 	ent "github.com/conductorone/baton-sdk/pkg/types/entitlement"
 	grant "github.com/conductorone/baton-sdk/pkg/types/grant"
 	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"go.uber.org/zap"
 )
 
 const (
@@ -107,8 +105,6 @@ func (o *workspaceResourceType) List(ctx context.Context, resourceId *v2.Resourc
 		}
 	}
 
-	l := ctxzap.Extract(ctx)
-	l.Info("Listing workspaces", zap.Any("allowed_workspaces", o.allowedWorkspaces))
 	rv := make([]*v2.Resource, 0, len(*o.allowedWorkspaces))
 	for _, workspaceId := range *o.allowedWorkspaces {
 		workspaceInfo, _, err := o.client.GetWorkspace(ctx, workspaceId)
