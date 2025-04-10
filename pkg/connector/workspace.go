@@ -17,6 +17,8 @@ import (
 	ent "github.com/conductorone/baton-sdk/pkg/types/entitlement"
 	grant "github.com/conductorone/baton-sdk/pkg/types/grant"
 	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
 )
 
 const (
@@ -34,7 +36,7 @@ var workspaceRoles = []string{
 type workspaceResourceType struct {
 	resourceType           *v2.ResourceType
 	client                 *asana.Client
-	allowedWorkspaces      *[]string
+	allowedWorkspaces      []string
 	allowedWorkspacesMutex sync.Mutex
 }
 
@@ -82,7 +84,10 @@ func (o *workspaceResourceType) loadAllowedWorkspaces(ctx context.Context) error
 		return nil
 	}
 
-	o.allowedWorkspaces = &[]string{}
+	l := ctxzap.Extract(ctx)
+	l.Info("baton-asana: loading allowed workspaces")
+
+	o.allowedWorkspaces = []string{}
 	workspaceMemberships, err := o.client.AuthCheck(ctx)
 	if err != nil {
 		return err
@@ -90,9 +95,11 @@ func (o *workspaceResourceType) loadAllowedWorkspaces(ctx context.Context) error
 
 	for _, workspaceMembership := range workspaceMemberships {
 		if !workspaceMembership.IsGuest {
-			*o.allowedWorkspaces = append(*o.allowedWorkspaces, workspaceMembership.Workspace.Gid)
+			o.allowedWorkspaces = append(o.allowedWorkspaces, workspaceMembership.Workspace.Gid)
 		}
 	}
+
+	l.Info("baton-asana: loaded allowed workspaces", zap.Any("allowedWorkspaces", o.allowedWorkspaces))
 
 	return nil
 }
@@ -105,8 +112,8 @@ func (o *workspaceResourceType) List(ctx context.Context, resourceId *v2.Resourc
 		}
 	}
 
-	rv := make([]*v2.Resource, 0, len(*o.allowedWorkspaces))
-	for _, workspaceId := range *o.allowedWorkspaces {
+	rv := make([]*v2.Resource, 0, len(o.allowedWorkspaces))
+	for _, workspaceId := range o.allowedWorkspaces {
 		workspaceInfo, _, err := o.client.GetWorkspace(ctx, workspaceId)
 		if err != nil {
 			return nil, "", nil, err
