@@ -37,14 +37,13 @@ var (
 )
 
 type Asana struct {
-	client            *asana.Client
-	allowedWorkspaces []string
+	client *asana.Client
 }
 
 func (as *Asana) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
 		userBuilder(as.client),
-		workspaceBuilder(as.client, as.allowedWorkspaces),
+		workspaceBuilder(as.client),
 		teamBuilder(as.client),
 	}
 }
@@ -59,16 +58,11 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 
 // Validate hits the Asana API to validate that the API key passed has admin rights.
 func (as *Asana) Validate(ctx context.Context) (annotations.Annotations, error) {
-	workspaceMemberships, err := as.client.AuthCheck(ctx)
+	_, err := as.client.AuthCheck(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("baton-asana: failed to authenticate. Error: %w", err)
 	}
 
-	for _, workspaceMembership := range workspaceMemberships {
-		if !workspaceMembership.IsGuest {
-			as.allowedWorkspaces = append(as.allowedWorkspaces, workspaceMembership.Workspace.Gid)
-		}
-	}
 	return nil, nil
 }
 
@@ -85,7 +79,6 @@ func New(ctx context.Context, accessToken string) (*Asana, error) {
 	}
 
 	return &Asana{
-		client:            asana.NewClient(accessToken, uhttpClient),
-		allowedWorkspaces: []string{},
+		client: asana.NewClient(accessToken, uhttpClient),
 	}, nil
 }
