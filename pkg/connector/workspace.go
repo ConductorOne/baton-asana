@@ -34,14 +34,14 @@ var workspaceRoles = []string{
 type workspaceResourceType struct {
 	resourceType      *v2.ResourceType
 	client            *asana.Client
-	allowedWorkspaces *[]string
+	allowedWorkspaces []string
 }
 
 func (o *workspaceResourceType) ResourceType(_ context.Context) *v2.ResourceType {
 	return o.resourceType
 }
 
-func workspaceBuilder(client *asana.Client, allowedWorkspaces *[]string) *workspaceResourceType {
+func workspaceBuilder(client *asana.Client, allowedWorkspaces []string) *workspaceResourceType {
 	return &workspaceResourceType{
 		resourceType:      resourceTypeWorkspace,
 		client:            client,
@@ -79,8 +79,8 @@ func (o *workspaceResourceType) List(ctx context.Context, resourceId *v2.Resourc
 		return nil, "", nil, nil
 	}
 
-	rv := make([]*v2.Resource, 0, len(*o.allowedWorkspaces))
-	for _, workspaceId := range *o.allowedWorkspaces {
+	rv := make([]*v2.Resource, 0, len(o.allowedWorkspaces))
+	for _, workspaceId := range o.allowedWorkspaces {
 		workspaceInfo, _, err := o.client.GetWorkspace(ctx, workspaceId)
 		if err != nil {
 			return nil, "", nil, err

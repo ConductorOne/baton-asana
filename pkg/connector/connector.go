@@ -12,8 +12,6 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 )
 
-var allowedWorkspaces []string
-
 var (
 	resourceTypeUser = &v2.ResourceType{
 		Id:          "user",
@@ -40,7 +38,7 @@ var (
 
 type Asana struct {
 	client            *asana.Client
-	allowedWorkspaces *[]string
+	allowedWorkspaces []string
 }
 
 func (as *Asana) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
@@ -68,7 +66,7 @@ func (as *Asana) Validate(ctx context.Context) (annotations.Annotations, error) 
 
 	for _, workspaceMembership := range workspaceMemberships {
 		if !workspaceMembership.IsGuest {
-			allowedWorkspaces = append(allowedWorkspaces, workspaceMembership.Workspace.Gid)
+			as.allowedWorkspaces = append(as.allowedWorkspaces, workspaceMembership.Workspace.Gid)
 		}
 	}
 	return nil, nil
@@ -88,6 +86,6 @@ func New(ctx context.Context, accessToken string) (*Asana, error) {
 
 	return &Asana{
 		client:            asana.NewClient(accessToken, uhttpClient),
-		allowedWorkspaces: &allowedWorkspaces,
+		allowedWorkspaces: []string{},
 	}, nil
 }
