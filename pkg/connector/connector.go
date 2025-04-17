@@ -37,13 +37,14 @@ var (
 )
 
 type Asana struct {
-	client *asana.Client
+	client            *asana.Client
+	useServiceAccount bool
 }
 
 func (as *Asana) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
 		userBuilder(as.client),
-		workspaceBuilder(as.client),
+		workspaceBuilder(as.client, as.useServiceAccount),
 		teamBuilder(as.client),
 	}
 }
@@ -58,16 +59,25 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 
 // Validate hits the Asana API to validate that the API key passed has admin rights.
 func (as *Asana) Validate(ctx context.Context) (annotations.Annotations, error) {
-	_, err := as.client.AuthCheck(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("baton-asana: failed to authenticate. Error: %w", err)
+	if as.useServiceAccount {
+		// For service account tokens, validate with ListAllWorkspaces
+		_, err := as.client.ListAllWorkspaces(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("baton-asana: failed to authenticate with service account token. Error: %w", err)
+		}
+	} else {
+		// For regular user tokens, validate with AuthCheck
+		_, err := as.client.AuthCheck(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("baton-asana: failed to authenticate. Error: %w", err)
+		}
 	}
 
 	return nil, nil
 }
 
 // New returns the Asana connector.
-func New(ctx context.Context, accessToken string) (*Asana, error) {
+func New(ctx context.Context, accessToken string, opts ...Option) (*Asana, error) {
 	httpClient, err := uhttp.NewClient(ctx, uhttp.WithLogger(true, ctxzap.Extract(ctx)))
 	if err != nil {
 		return nil, err
@@ -78,7 +88,23 @@ func New(ctx context.Context, accessToken string) (*Asana, error) {
 		return nil, err
 	}
 
-	return &Asana{
+	c := &Asana{
 		client: asana.NewClient(accessToken, uhttpClient),
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c, nil
+}
+
+// Option allows for configuration of the Asana connector.
+type Option func(*Asana)
+
+// WithServiceAccount configures the connector to use a service account token.
+func WithServiceAccount(useServiceAccount bool) Option {
+	return func(a *Asana) {
+		a.useServiceAccount = useServiceAccount
+	}
 }
