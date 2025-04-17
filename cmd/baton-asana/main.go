@@ -51,9 +51,9 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 	}
 
 	useServiceAccount := v.GetBool(UseServiceAccountField.FieldName)
-	
+
 	cb, err := connector.New(
-		ctx, 
+		ctx,
 		v.GetString(TokenField.FieldName),
 		connector.WithServiceAccount(useServiceAccount),
 	)
