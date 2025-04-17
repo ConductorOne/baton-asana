@@ -59,9 +59,18 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 
 // Validate hits the Asana API to validate that the API key passed has admin rights.
 func (as *Asana) Validate(ctx context.Context) (annotations.Annotations, error) {
-	_, err := as.client.AuthCheck(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("baton-asana: failed to authenticate. Error: %w", err)
+	if as.useServiceAccount {
+		// For service account tokens, validate with ListAllWorkspaces
+		_, err := as.client.ListAllWorkspaces(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("baton-asana: failed to authenticate with service account token. Error: %w", err)
+		}
+	} else {
+		// For regular user tokens, validate with AuthCheck
+		_, err := as.client.AuthCheck(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("baton-asana: failed to authenticate. Error: %w", err)
+		}
 	}
 
 	return nil, nil
