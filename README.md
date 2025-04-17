@@ -9,7 +9,9 @@ Check out [Baton](https://github.com/conductorone/baton) to learn more the proje
 
 ## Prerequisites
 
-1. Personal Acess Token. See more info [here](https://developers.asana.com/docs/personal-access-token).
+1. Authentication Token:
+   - Personal Access Token: See more info [here](https://developers.asana.com/docs/personal-access-token)
+   - Service Account Token: (For Enterprise Asana customers) Can be used by setting the `--use-service-account` flag or `BATON_USE_SERVICE_ACCOUNT=true` environment variable
 
 ## brew
 
@@ -74,7 +76,8 @@ Flags:
       --log-format string      The output format for logs: json, console ($BATON_LOG_FORMAT) (default "json")
       --log-level string       The log level: debug, info, warn, error ($BATON_LOG_LEVEL) (default "info")
   -p, --provisioning           This must be set in order for provisioning actions to be enabled. ($BATON_PROVISIONING)
-      --token string           The Asana personal access token used to connect to the Asana API. ($BATON_TOKEN)
+      --token string           The Asana API token (personal access token or service account token) used to connect to the Asana API. ($BATON_TOKEN)
+      --use-service-account    Set to true if using a service account token instead of a personal access token. ($BATON_USE_SERVICE_ACCOUNT)
   -v, --version                version for baton-asana
 
 Use "baton-asana [command] --help" for more information about a command.

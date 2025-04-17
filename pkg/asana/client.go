@@ -274,6 +274,37 @@ func (c *Client) AuthCheck(ctx context.Context) ([]WorkspaceMembership, error) {
 	return res.Data, nil
 }
 
+// ListAllWorkspaces returns all workspaces visible to the authenticated token.
+// This is particularly useful for service account tokens which may not have direct workspace memberships.
+func (c *Client) ListAllWorkspaces(ctx context.Context) ([]Workspace, error) {
+	workspacesUrl := fmt.Sprint(BaseUrl, "/workspaces")
+	q := url.Values{}
+	q.Add("opt_fields", "gid,name,is_organization,email_domains")
+	
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, workspacesUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	
+	req.URL.RawQuery = q.Encode()
+	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
+	req.Header.Add("accept", "application/json")
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	
+	var res struct {
+		Data []Workspace `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return nil, err
+	}
+	
+	return res.Data, nil
+}
+
 // AddUserToWorkspace adds a user to a workspace.
 func (c *Client) AddUserToWorkspace(ctx context.Context, workspaceId, userId string) error {
 	addUserToWorkspaceUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s/addUser", workspaceId))

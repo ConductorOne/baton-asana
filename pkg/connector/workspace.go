@@ -38,16 +38,18 @@ type workspaceResourceType struct {
 	client                 *asana.Client
 	allowedWorkspaces      []string
 	allowedWorkspacesMutex sync.Mutex
+	useServiceAccount      bool
 }
 
 func (o *workspaceResourceType) ResourceType(_ context.Context) *v2.ResourceType {
 	return o.resourceType
 }
 
-func workspaceBuilder(client *asana.Client) *workspaceResourceType {
+func workspaceBuilder(client *asana.Client, useServiceAccount bool) *workspaceResourceType {
 	return &workspaceResourceType{
-		resourceType: resourceTypeWorkspace,
-		client:       client,
+		resourceType:      resourceTypeWorkspace,
+		client:            client,
+		useServiceAccount: useServiceAccount,
 	}
 }
 
@@ -85,16 +87,30 @@ func (o *workspaceResourceType) loadAllowedWorkspaces(ctx context.Context) error
 	}
 
 	l := ctxzap.Extract(ctx)
-
 	o.allowedWorkspaces = []string{}
-	workspaceMemberships, err := o.client.AuthCheck(ctx)
-	if err != nil {
-		return err
-	}
 
-	for _, workspaceMembership := range workspaceMemberships {
-		if !workspaceMembership.IsGuest {
-			o.allowedWorkspaces = append(o.allowedWorkspaces, workspaceMembership.Workspace.Gid)
+	// Handle service account tokens differently
+	if o.useServiceAccount {
+		// For service accounts, get all workspaces directly
+		workspaces, err := o.client.ListAllWorkspaces(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, workspace := range workspaces {
+			o.allowedWorkspaces = append(o.allowedWorkspaces, workspace.Gid)
+		}
+	} else {
+		// For personal access tokens, get workspaces the user is a member of
+		workspaceMemberships, err := o.client.AuthCheck(ctx)
+		if err != nil {
+			return err
+		}
+
+		for _, workspaceMembership := range workspaceMemberships {
+			if !workspaceMembership.IsGuest {
+				o.allowedWorkspaces = append(o.allowedWorkspaces, workspaceMembership.Workspace.Gid)
+			}
 		}
 	}
 

@@ -11,7 +11,12 @@ var (
 	TokenField = field.StringField(
 		"token",
 		field.WithRequired(true),
-		field.WithDescription("Your Asana API key"),
+		field.WithDescription("Your Asana API key (Personal Access Token or Service Account Token)"),
+	)
+
+	UseServiceAccountField = field.BoolField(
+		"use-service-account",
+		field.WithDescription("Set to true if using a service account token instead of a personal access token"),
 	)
 
 	// ConfigurationFields defines the external configuration required for the
@@ -19,6 +24,7 @@ var (
 	// required.
 	ConfigurationFields = []field.SchemaField{
 		TokenField,
+		UseServiceAccountField,
 	}
 
 	// FieldRelationships defines relationships between the fields listed in
