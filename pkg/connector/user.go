@@ -2,18 +2,28 @@ package connector
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/conductorone/baton-asana/pkg/asana"
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
 	"github.com/conductorone/baton-sdk/pkg/annotations"
+	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
 	"github.com/conductorone/baton-sdk/pkg/pagination"
 	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"go.uber.org/zap"
 )
 
 type userResourceType struct {
-	resourceType *v2.ResourceType
-	client       *asana.Client
+	resourceType            *v2.ResourceType
+	client                  *asana.Client
+	accountCreationSettings AccountCreationSettings
+}
+
+// AccountCreationSettings holds settings for account creation.
+type AccountCreationSettings struct {
+	DefaultWorkspaceID string
 }
 
 func (o *userResourceType) ResourceType(_ context.Context) *v2.ResourceType {
@@ -100,9 +110,134 @@ func (o *userResourceType) Grants(_ context.Context, _ *v2.Resource, _ *paginati
 	return nil, "", nil, nil
 }
 
-func userBuilder(client *asana.Client) *userResourceType {
+// CreateAccountCapabilityDetails describes the account creation capabilities this connector supports.
+func (o *userResourceType) CreateAccountCapabilityDetails(ctx context.Context) (*v2.CredentialDetailsAccountProvisioning, annotations.Annotations, error) {
+	// For Asana, we don't need to handle passwords as Asana handles that through email invites
+	return &v2.CredentialDetailsAccountProvisioning{
+		SupportedCredentialOptions: []v2.CapabilityDetailCredentialOption{
+			v2.CapabilityDetailCredentialOption_CAPABILITY_DETAIL_CREDENTIAL_OPTION_NO_PASSWORD,
+		},
+		PreferredCredentialOption: v2.CapabilityDetailCredentialOption_CAPABILITY_DETAIL_CREDENTIAL_OPTION_NO_PASSWORD,
+	}, nil, nil
+}
+
+// CreateAccount provisions a new user account in Asana.
+func (o *userResourceType) CreateAccount(
+	ctx context.Context,
+	accountInfo *v2.AccountInfo,
+	credentialOptions *v2.CredentialOptions,
+) (
+	connectorbuilder.CreateAccountResponse,
+	[]*v2.PlaintextData,
+	annotations.Annotations,
+	error,
+) {
+	l := ctxzap.Extract(ctx)
+
+	// Check if we have a default workspace ID
+	if o.accountCreationSettings.DefaultWorkspaceID == "" {
+		return nil, nil, nil, fmt.Errorf("default workspace ID not set")
+	}
+
+	// Get account information from the profile
+	profile := accountInfo.Profile.AsMap()
+
+	// Extract email
+	email, ok := profile["email"].(string)
+	if !ok || email == "" {
+		return nil, nil, nil, fmt.Errorf("email is required")
+	}
+
+	// Extract name
+	firstName, _ := profile["first_name"].(string)
+	lastName, _ := profile["last_name"].(string)
+	var fullName string
+
+	switch {
+	case firstName != "" && lastName != "":
+		fullName = firstName + " " + lastName
+	case firstName != "":
+		fullName = firstName
+	case lastName != "":
+		fullName = lastName
+	default:
+		// If no name is provided, use the part of the email before @
+		parts := strings.Split(email, "@")
+		fullName = parts[0]
+	}
+
+	l.Info("baton-asana: creating user account",
+		zap.String("email", email),
+		zap.String("name", fullName),
+		zap.String("workspace_id", o.accountCreationSettings.DefaultWorkspaceID))
+
+	// Invite the user to Asana via the workspace
+	err := o.client.InviteUserToWorkspace(ctx, o.accountCreationSettings.DefaultWorkspaceID, email)
+	if err != nil {
+		l.Error("baton-asana: failed to invite user to workspace",
+			zap.String("email", email),
+			zap.String("workspace_id", o.accountCreationSettings.DefaultWorkspaceID),
+			zap.Error(err))
+		return nil, nil, nil, fmt.Errorf("failed to invite user to workspace: %w", err)
+	}
+
+	// Get user details from the workspace after invitation
+	users, _, _, err := o.client.GetUsers(ctx, asana.GetUsersVars{
+		WorkspaceId: o.accountCreationSettings.DefaultWorkspaceID,
+		Limit:       100,
+	})
+
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to get user details after invitation: %w", err)
+	}
+
+	// Find the user with the matching email
+	var invitedUser *asana.User
+	for _, user := range users {
+		if user.Email == email {
+			userCopy := user
+			invitedUser = &userCopy
+			break
+		}
+	}
+
+	if invitedUser == nil {
+		l.Warn("baton-asana: user was invited but not found in the user list",
+			zap.String("email", email))
+
+		// Create a placeholder user resource
+		invitedUser = &asana.User{
+			BaseResource: asana.BaseResource{
+				Name:         fullName,
+				ResourceType: "user",
+			},
+			Email: email,
+		}
+	}
+
+	// Create the user resource
+	userRes, err := userResource(ctx, invitedUser, nil)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create user resource: %w", err)
+	}
+
+	// Return successful creation
+	successResult := &v2.CreateAccountResponse_SuccessResult{
+		Resource: userRes,
+	}
+
+	l.Info("baton-asana: successfully created user account",
+		zap.String("email", email),
+		zap.String("user_id", invitedUser.Gid))
+
+	// Asana doesn't require password handling as it sends email invites
+	return successResult, []*v2.PlaintextData{}, nil, nil
+}
+
+func userBuilder(client *asana.Client, accountCreationSettings AccountCreationSettings) *userResourceType {
 	return &userResourceType{
-		resourceType: resourceTypeUser,
-		client:       client,
+		resourceType:            resourceTypeUser,
+		client:                  client,
+		accountCreationSettings: accountCreationSettings,
 	}
 }

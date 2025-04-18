@@ -19,12 +19,18 @@ var (
 		field.WithDescription("Set to true if using a service account token instead of a personal access token"),
 	)
 
+	DefaultWorkspaceIDField = field.StringField(
+		"default-workspace-id",
+		field.WithDescription("The default workspace ID to use for account provisioning"),
+	)
+
 	// ConfigurationFields defines the external configuration required for the
 	// connector to run. Note: these fields can be marked as optional or
 	// required.
 	ConfigurationFields = []field.SchemaField{
 		TokenField,
 		UseServiceAccountField,
+		DefaultWorkspaceIDField,
 	}
 
 	// FieldRelationships defines relationships between the fields listed in

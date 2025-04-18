@@ -214,13 +214,42 @@ func (o *workspaceResourceType) Grant(ctx context.Context, resource *v2.Resource
 		workspaceId := entitlement.Resource.Id.Resource
 		userId := resource.Id.Resource
 
+		// Try to add user to workspace by userId first
 		err := o.client.AddUserToWorkspace(ctx, workspaceId, userId)
 		if err != nil {
+			// If it fails with a permission denied error, it could be because:
+			// 1. The user doesn't have permission
+			// 2. The user was previously removed
+			// 3. The user doesn't exist yet and needs to be invited
 			if status.Code(err) == codes.PermissionDenied {
-				return nil, nil, errors.Join(err, errors.New("user does not have permission to add user to workspace or the user was previous removed from the workspace"))
-			}
+				// Get the user's email to try invitation
+				l := ctxzap.Extract(ctx)
 
-			return nil, nil, err
+				userTrait, err := rs.GetUserTrait(resource)
+				if err != nil {
+					return nil, nil, err
+				}
+
+				var email string
+				if len(userTrait.Emails) > 0 {
+					email = userTrait.Emails[0].Address
+				}
+				if email == "" {
+					return nil, nil, errors.Join(err, errors.New("user does not have permission to add user to workspace or the user was previously removed from the workspace"))
+				}
+
+				// Try to invite the user by email
+				l.Debug("baton-asana: trying to invite user by email", zap.String("email", email))
+
+				err = o.client.InviteUserToWorkspace(ctx, workspaceId, email)
+				if err != nil {
+					return nil, nil, errors.Join(err, errors.New("failed to invite user by email"))
+				}
+
+				l.Info("baton-asana: invited user to workspace by email", zap.String("email", email))
+			} else {
+				return nil, nil, err
+			}
 		}
 
 		workspaceEntitlement, err := getWorkspaceEntitlement(entitlement)

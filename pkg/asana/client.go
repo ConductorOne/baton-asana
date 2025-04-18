@@ -70,6 +70,11 @@ type TeamsResponse struct {
 	NextPage PaginationData `json:"next_page"`
 }
 
+// CreateUserResponse is the response from the Asana API when creating a user.
+type CreateUserResponse struct {
+	Data User `json:"data"`
+}
+
 func NewClient(accessToken string, httpClient *uhttp.BaseHttpClient) *Client {
 	return &Client{
 		accessToken: accessToken,
@@ -359,6 +364,41 @@ func (c *Client) RemoveUserToWorkspace(ctx context.Context, workspaceId, userId 
 		ctx,
 		http.MethodPost,
 		removeUserToWorkspaceUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(body),
+	)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+// InviteUserToWorkspace invites a user by email to a workspace.
+func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email string) error {
+	inviteUserUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s/addUser", workspaceId))
+	if err != nil {
+		return err
+	}
+
+	body := baseMutationBody{
+		Data: struct {
+			Email string `json:"email"`
+		}{
+			Email: email,
+		},
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPost,
+		inviteUserUrl,
 		uhttp.WithBearerToken(c.accessToken),
 		uhttp.WithJSONBody(body),
 	)
