@@ -134,11 +134,6 @@ func (o *userResourceType) CreateAccount(
 ) {
 	l := ctxzap.Extract(ctx)
 
-	// Check if we have a default workspace ID
-	if o.accountCreationSettings.DefaultWorkspaceID == "" {
-		return nil, nil, nil, fmt.Errorf("default workspace ID not set")
-	}
-
 	// Get account information from the profile
 	profile := accountInfo.Profile.AsMap()
 
@@ -166,17 +161,28 @@ func (o *userResourceType) CreateAccount(
 		fullName = parts[0]
 	}
 
+	// Check for workspace ID in the request, otherwise use the default
+	workspaceID := o.accountCreationSettings.DefaultWorkspaceID
+	if requestWorkspaceID, ok := profile["workspace_id"].(string); ok && requestWorkspaceID != "" {
+		workspaceID = requestWorkspaceID
+	}
+
+	// Validate that we have a workspace ID
+	if workspaceID == "" {
+		return nil, nil, nil, fmt.Errorf("workspace ID not provided and default workspace ID not set")
+	}
+
 	l.Info("baton-asana: creating user account",
 		zap.String("email", email),
 		zap.String("name", fullName),
-		zap.String("workspace_id", o.accountCreationSettings.DefaultWorkspaceID))
+		zap.String("workspace_id", workspaceID))
 
 	// Invite the user to Asana via the workspace and get user details directly from the response
-	invitedUser, err := o.client.InviteUserToWorkspace(ctx, o.accountCreationSettings.DefaultWorkspaceID, email)
+	invitedUser, err := o.client.InviteUserToWorkspace(ctx, workspaceID, email)
 	if err != nil {
 		l.Error("baton-asana: failed to invite user to workspace",
 			zap.String("email", email),
-			zap.String("workspace_id", o.accountCreationSettings.DefaultWorkspaceID),
+			zap.String("workspace_id", workspaceID),
 			zap.Error(err))
 		return nil, nil, nil, fmt.Errorf("failed to invite user to workspace: %w", err)
 	}

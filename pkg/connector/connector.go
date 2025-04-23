@@ -87,6 +87,16 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 					Placeholder: "user@example.com",
 					Order:       3,
 				},
+				"workspace_id": {
+					DisplayName: "Workspace ID",
+					Required:    false,
+					Description: "The Asana workspace ID to add the user to. If not provided, the default workspace ID configured for the connector will be used.",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "1234567890",
+					Order:       4,
+				},
 			},
 		},
 	}, nil
