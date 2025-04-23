@@ -2,7 +2,6 @@ package asana
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -93,30 +92,39 @@ func paginationQuery(q url.Values, limit int, offset string) url.Values {
 
 // GetUsers returns all users for a single workspace.
 func (c *Client) GetUsers(ctx context.Context, getUsersVars GetUsersVars) ([]User, string, *http.Response, error) {
-	usersUrl := fmt.Sprint(BaseUrl, "/users")
+	usersUrl, err := getPath(BaseUrl, "/users")
+	if err != nil {
+		return nil, "", nil, err
+	}
+	
 	q := url.Values{}
 	q.Add("workspace", getUsersVars.WorkspaceId)
 	q.Add("opt_fields", "email,name")
 	q = paginationQuery(q, getUsersVars.Limit, getUsersVars.Offset)
+	
+	usersUrl.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, usersUrl, nil)
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		usersUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	req.URL.RawQuery = q.Encode()
-	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
-	req.Header.Add("accept", "application/json")
-	resp, err := c.httpClient.Do(req)
+	var res UsersResponse
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&res),
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 	defer resp.Body.Close()
-
-	var res UsersResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return nil, "", nil, err
-	}
 
 	if (res.NextPage != PaginationData{}) {
 		return res.Data, res.NextPage.Offset, resp, nil
@@ -127,56 +135,71 @@ func (c *Client) GetUsers(ctx context.Context, getUsersVars GetUsersVars) ([]Use
 
 // GetWorkspace returns details of a single workspace.
 func (c *Client) GetWorkspace(ctx context.Context, workspaceId string) (Workspace, *http.Response, error) {
-	workspaceUrl := fmt.Sprintf("%s/workspaces/%s", BaseUrl, workspaceId)
+	workspaceUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s", workspaceId))
+	if err != nil {
+		return Workspace{}, nil, err
+	}
 	q := url.Values{}
 	q.Add("opt_fields", "is_organization,name,email_domains")
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, workspaceUrl, nil)
+	workspaceUrl.RawQuery = q.Encode()
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		workspaceUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
 	if err != nil {
 		return Workspace{}, nil, err
 	}
 
-	req.URL.RawQuery = q.Encode()
-	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
-	req.Header.Add("accept", "application/json")
-	resp, err := c.httpClient.Do(req)
+	var res WorkspaceResponse
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req, 
+		uhttp.WithJSONResponse(&res),
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return Workspace{}, nil, err
 	}
 	defer resp.Body.Close()
-
-	var res WorkspaceResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return Workspace{}, nil, err
-	}
 
 	return res.Data, resp, nil
 }
 
 // GetWorkspaceMemberships returns all workspace memberships for a single workspace.
 func (c *Client) GetWorkspaceMemberships(ctx context.Context, getWorkspaceMembershipsVars GetWorkspaceMembershipsVars) ([]WorkspaceMembership, string, *http.Response, error) {
-	membershipsUrl := fmt.Sprintf("%s/workspaces/%s/workspace_memberships", BaseUrl, getWorkspaceMembershipsVars.WorkspaceId)
+	membershipsUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s/workspace_memberships", getWorkspaceMembershipsVars.WorkspaceId))
+	if err != nil {
+		return nil, "", nil, err
+	}
 	q := url.Values{}
 	q.Add("opt_fields", "name,is_active,is_admin,is_guest,workspace.name,user.name,user.email")
 	q = paginationQuery(q, getWorkspaceMembershipsVars.Limit, getWorkspaceMembershipsVars.Offset)
+	membershipsUrl.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, membershipsUrl, nil)
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		membershipsUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	req.URL.RawQuery = q.Encode()
-	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
-	req.Header.Add("accept", "application/json")
-	resp, err := c.httpClient.Do(req)
+	var res WorkspaceMembershipsResponse
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req, 
+		uhttp.WithJSONResponse(&res),
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 	defer resp.Body.Close()
-
-	var res WorkspaceMembershipsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return nil, "", nil, err
-	}
 
 	if (res.NextPage != PaginationData{}) {
 		return res.Data, res.NextPage.Offset, resp, nil
@@ -187,29 +210,36 @@ func (c *Client) GetWorkspaceMemberships(ctx context.Context, getWorkspaceMember
 
 // GetTeams returns all teams for a single workspace.
 func (c *Client) GetTeams(ctx context.Context, getTeamsVars GetTeamsVars) ([]Team, string, *http.Response, error) {
-	teamsUrl := fmt.Sprintf("%s/workspaces/%s/teams", BaseUrl, getTeamsVars.WorkspaceId)
+	teamsUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s/teams", getTeamsVars.WorkspaceId))
+	if err != nil {
+		return nil, "", nil, err
+	}
 	q := url.Values{}
 	q.Add("opt_fields", "name,organization.name,organization.id,user.name,user.email")
 	q = paginationQuery(q, getTeamsVars.Limit, getTeamsVars.Offset)
+	teamsUrl.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, teamsUrl, nil)
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		teamsUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	req.URL.RawQuery = q.Encode()
-	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
-	req.Header.Add("accept", "application/json")
-	resp, err := c.httpClient.Do(req)
+	var res TeamsResponse
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req, 
+		uhttp.WithJSONResponse(&res),
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 	defer resp.Body.Close()
-
-	var res TeamsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return nil, "", nil, err
-	}
 
 	if (res.NextPage != PaginationData{}) {
 		return res.Data, res.NextPage.Offset, resp, nil
@@ -220,29 +250,36 @@ func (c *Client) GetTeams(ctx context.Context, getTeamsVars GetTeamsVars) ([]Tea
 
 // GetTeamMemberships returns all team memberships for a single team.
 func (c *Client) GetTeamMemberships(ctx context.Context, getTeamMembershipsVars GetTeamMembershipsVars) ([]TeamMembership, string, *http.Response, error) {
-	teamMembershipsUrl := fmt.Sprintf("%s/teams/%s/team_memberships", BaseUrl, getTeamMembershipsVars.TeamId)
+	teamMembershipsUrl, err := getPath(BaseUrl, fmt.Sprintf("/teams/%s/team_memberships", getTeamMembershipsVars.TeamId))
+	if err != nil {
+		return nil, "", nil, err
+	}
 	q := url.Values{}
 	q.Add("opt_fields", "team.name,is_limited_access,is_admin,is_guest,user.name,user.email")
 	q = paginationQuery(q, getTeamMembershipsVars.Limit, getTeamMembershipsVars.Offset)
+	teamMembershipsUrl.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, teamMembershipsUrl, nil)
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		teamMembershipsUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	req.URL.RawQuery = q.Encode()
-	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
-	req.Header.Add("accept", "application/json")
-	resp, err := c.httpClient.Do(req)
+	var res TeamMembershipsResponse
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req, 
+		uhttp.WithJSONResponse(&res),
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return nil, "", nil, err
 	}
 	defer resp.Body.Close()
-
-	var res TeamMembershipsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return nil, "", nil, err
-	}
 
 	if (res.NextPage != PaginationData{}) {
 		return res.Data, res.NextPage.Offset, resp, nil
@@ -253,28 +290,35 @@ func (c *Client) GetTeamMemberships(ctx context.Context, getTeamMembershipsVars 
 
 // AuthCheck returns workspace permissions of an authenticated user.
 func (c *Client) AuthCheck(ctx context.Context) ([]WorkspaceMembership, error) {
-	authUrl := fmt.Sprint(BaseUrl, "/users/me/workspace_memberships")
+	authUrl, err := getPath(BaseUrl, "/users/me/workspace_memberships")
+	if err != nil {
+		return nil, err
+	}
 	q := url.Values{}
 	q.Add("opt_fields", "workspace.name,workspace.gid,is_active,is_admin,is_guest")
+	authUrl.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, authUrl, nil)
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		authUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	req.URL.RawQuery = q.Encode()
-	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
-	req.Header.Add("accept", "application/json")
-	resp, err := c.httpClient.Do(req)
+	var res AuthCheckResponse
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&res),
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	var res AuthCheckResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return nil, err
-	}
 
 	return res.Data, nil
 }
@@ -282,30 +326,37 @@ func (c *Client) AuthCheck(ctx context.Context) ([]WorkspaceMembership, error) {
 // ListAllWorkspaces returns all workspaces visible to the authenticated token.
 // This is particularly useful for service account tokens which may not have direct workspace memberships.
 func (c *Client) ListAllWorkspaces(ctx context.Context) ([]Workspace, error) {
-	workspacesUrl := fmt.Sprint(BaseUrl, "/workspaces")
+	workspacesUrl, err := getPath(BaseUrl, "/workspaces")
+	if err != nil {
+		return nil, err
+	}
 	q := url.Values{}
 	q.Add("opt_fields", "gid,name,is_organization,email_domains")
+	workspacesUrl.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, workspacesUrl, nil)
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		workspacesUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	req.URL.RawQuery = q.Encode()
-	req.Header.Add("authorization", fmt.Sprint("Bearer ", c.accessToken))
-	req.Header.Add("accept", "application/json")
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
 
 	var res struct {
 		Data []Workspace `json:"data"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&res),
+		uhttp.WithErrorResponse(&asanaError),
+	)
+	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	return res.Data, nil
 }
@@ -371,7 +422,10 @@ func (c *Client) RemoveUserToWorkspace(ctx context.Context, workspaceId, userId 
 		return err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return err
 	}
@@ -406,19 +460,16 @@ func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email s
 		return nil, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	var result CreateUserResponse
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req, 
+		uhttp.WithJSONResponse(&result),
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	// Parse the response to get the user details
-	var result struct {
-		Data User `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode user response: %w", err)
-	}
 
 	return &result.Data, nil
 }
@@ -449,7 +500,10 @@ func (c *Client) AddUserToTeam(ctx context.Context, teamId, userId string) error
 		return err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req, 
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return err
 	}
@@ -484,7 +538,10 @@ func (c *Client) RemoveUserToTeam(ctx context.Context, teamId, userId string) er
 		return err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req, 
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
 		return err
 	}
