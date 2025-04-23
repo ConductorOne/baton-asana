@@ -143,24 +143,6 @@ func (o *userResourceType) CreateAccount(
 		return nil, nil, nil, fmt.Errorf("email is required")
 	}
 
-	// Extract name
-	firstName, _ := profile["first_name"].(string)
-	lastName, _ := profile["last_name"].(string)
-	var fullName string
-
-	switch {
-	case firstName != "" && lastName != "":
-		fullName = firstName + " " + lastName
-	case firstName != "":
-		fullName = firstName
-	case lastName != "":
-		fullName = lastName
-	default:
-		// If no name is provided, use the part of the email before @
-		parts := strings.Split(email, "@")
-		fullName = parts[0]
-	}
-
 	// Check for workspace ID in the request, otherwise use the default
 	workspaceID := o.accountCreationSettings.DefaultWorkspaceID
 	if requestWorkspaceID, ok := profile["workspace_id"].(string); ok && requestWorkspaceID != "" {
@@ -174,7 +156,6 @@ func (o *userResourceType) CreateAccount(
 
 	l.Info("baton-asana: creating user account",
 		zap.String("email", email),
-		zap.String("name", fullName),
 		zap.String("workspace_id", workspaceID))
 
 	// Invite the user to Asana via the workspace and get user details directly from the response

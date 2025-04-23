@@ -57,26 +57,6 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 		Description: "Connector syncing users, teams and workspaces from Asana to Baton",
 		AccountCreationSchema: &v2.ConnectorAccountCreationSchema{
 			FieldMap: map[string]*v2.ConnectorAccountCreationSchema_Field{
-				"first_name": {
-					DisplayName: "First Name",
-					Required:    true,
-					Description: "The first name of the user.",
-					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
-						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
-					},
-					Placeholder: "First Name",
-					Order:       1,
-				},
-				"last_name": {
-					DisplayName: "Last Name",
-					Required:    false,
-					Description: "The last name of the user.",
-					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
-						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
-					},
-					Placeholder: "Last Name",
-					Order:       2,
-				},
 				"email": {
 					DisplayName: "Email",
 					Required:    true,
@@ -85,7 +65,7 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
 					},
 					Placeholder: "user@example.com",
-					Order:       3,
+					Order:       1,
 				},
 				"workspace_id": {
 					DisplayName: "Workspace ID",
@@ -95,7 +75,7 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
 					},
 					Placeholder: "1234567890",
-					Order:       4,
+					Order:       2,
 				},
 			},
 		},
