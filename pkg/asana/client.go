@@ -381,10 +381,10 @@ func (c *Client) RemoveUserToWorkspace(ctx context.Context, workspaceId, userId 
 }
 
 // InviteUserToWorkspace invites a user by email to a workspace.
-func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email string) error {
+func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email string) (*User, error) {
 	inviteUserUrl, err := getPath(BaseUrl, fmt.Sprintf("/workspaces/%s/addUser", workspaceId))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	body := baseMutationBody{
@@ -403,16 +403,24 @@ func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email s
 		uhttp.WithJSONBody(body),
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	return nil
+	// Parse the response to get the user details
+	var result struct {
+		Data User `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode user response: %w", err)
+	}
+
+	return &result.Data, nil
 }
 
 // AddUserToTeam adds a user to a team.

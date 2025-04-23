@@ -2,13 +2,9 @@ package connector
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/conductorone/baton-asana/pkg/asana"
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
@@ -214,42 +210,10 @@ func (o *workspaceResourceType) Grant(ctx context.Context, resource *v2.Resource
 		workspaceId := entitlement.Resource.Id.Resource
 		userId := resource.Id.Resource
 
-		// Try to add user to workspace by userId first
+		// Add existing user to workspace (ConductorOne orchestrates user creation)
 		err := o.client.AddUserToWorkspace(ctx, workspaceId, userId)
 		if err != nil {
-			// If it fails with a permission denied error, it could be because:
-			// 1. The user doesn't have permission
-			// 2. The user was previously removed
-			// 3. The user doesn't exist yet and needs to be invited
-			if status.Code(err) == codes.PermissionDenied {
-				// Get the user's email to try invitation
-				l := ctxzap.Extract(ctx)
-
-				userTrait, err := rs.GetUserTrait(resource)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				var email string
-				if len(userTrait.Emails) > 0 {
-					email = userTrait.Emails[0].Address
-				}
-				if email == "" {
-					return nil, nil, errors.Join(err, errors.New("user does not have permission to add user to workspace or the user was previously removed from the workspace"))
-				}
-
-				// Try to invite the user by email
-				l.Debug("baton-asana: trying to invite user by email", zap.String("email", email))
-
-				err = o.client.InviteUserToWorkspace(ctx, workspaceId, email)
-				if err != nil {
-					return nil, nil, errors.Join(err, errors.New("failed to invite user by email"))
-				}
-
-				l.Info("baton-asana: invited user to workspace by email", zap.String("email", email))
-			} else {
-				return nil, nil, err
-			}
+			return nil, nil, fmt.Errorf("failed to add user to workspace: %w", err)
 		}
 
 		workspaceEntitlement, err := getWorkspaceEntitlement(entitlement)

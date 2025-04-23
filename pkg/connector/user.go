@@ -171,8 +171,8 @@ func (o *userResourceType) CreateAccount(
 		zap.String("name", fullName),
 		zap.String("workspace_id", o.accountCreationSettings.DefaultWorkspaceID))
 
-	// Invite the user to Asana via the workspace
-	err := o.client.InviteUserToWorkspace(ctx, o.accountCreationSettings.DefaultWorkspaceID, email)
+	// Invite the user to Asana via the workspace and get user details directly from the response
+	invitedUser, err := o.client.InviteUserToWorkspace(ctx, o.accountCreationSettings.DefaultWorkspaceID, email)
 	if err != nil {
 		l.Error("baton-asana: failed to invite user to workspace",
 			zap.String("email", email),
@@ -181,39 +181,10 @@ func (o *userResourceType) CreateAccount(
 		return nil, nil, nil, fmt.Errorf("failed to invite user to workspace: %w", err)
 	}
 
-	// Get user details from the workspace after invitation
-	users, _, _, err := o.client.GetUsers(ctx, asana.GetUsersVars{
-		WorkspaceId: o.accountCreationSettings.DefaultWorkspaceID,
-		Limit:       100,
-	})
-
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to get user details after invitation: %w", err)
-	}
-
-	// Find the user with the matching email
-	var invitedUser *asana.User
-	for _, user := range users {
-		if user.Email == email {
-			userCopy := user
-			invitedUser = &userCopy
-			break
-		}
-	}
-
-	if invitedUser == nil {
-		l.Warn("baton-asana: user was invited but not found in the user list",
-			zap.String("email", email))
-
-		// Create a placeholder user resource
-		invitedUser = &asana.User{
-			BaseResource: asana.BaseResource{
-				Name:         fullName,
-				ResourceType: "user",
-			},
-			Email: email,
-		}
-	}
+	// Log success with user ID
+	l.Info("baton-asana: user invited successfully",
+		zap.String("email", email),
+		zap.String("user_id", invitedUser.Gid))
 
 	// Create the user resource
 	userRes, err := userResource(ctx, invitedUser, nil)
