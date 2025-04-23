@@ -1,0 +1,2 @@
+- Use the `baton` cli program to verify the contents of the sync.c1z file. Use `baton -h` to determine its capabilities.
+- To run a connector use the binary in ./dist/darwin_arm64, use -h flag to see available options
