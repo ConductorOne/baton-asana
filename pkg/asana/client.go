@@ -444,11 +444,13 @@ func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email s
 		return nil, err
 	}
 
+	// According to Asana API docs, we need to use the 'user' field
+	// instead of 'email' when inviting by email
 	body := baseMutationBody{
 		Data: struct {
-			Email string `json:"email"`
+			User string `json:"user"`
 		}{
-			Email: email,
+			User: email,
 		},
 	}
 
