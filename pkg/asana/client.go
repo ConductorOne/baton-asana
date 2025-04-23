@@ -96,12 +96,12 @@ func (c *Client) GetUsers(ctx context.Context, getUsersVars GetUsersVars) ([]Use
 	if err != nil {
 		return nil, "", nil, err
 	}
-	
+
 	q := url.Values{}
 	q.Add("workspace", getUsersVars.WorkspaceId)
 	q.Add("opt_fields", "email,name")
 	q = paginationQuery(q, getUsersVars.Limit, getUsersVars.Offset)
-	
+
 	usersUrl.RawQuery = q.Encode()
 
 	req, err := c.httpClient.NewRequest(
@@ -156,7 +156,7 @@ func (c *Client) GetWorkspace(ctx context.Context, workspaceId string) (Workspac
 
 	var res WorkspaceResponse
 	var asanaError AsanaError
-	resp, err := c.httpClient.Do(req, 
+	resp, err := c.httpClient.Do(req,
 		uhttp.WithJSONResponse(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
@@ -192,7 +192,7 @@ func (c *Client) GetWorkspaceMemberships(ctx context.Context, getWorkspaceMember
 
 	var res WorkspaceMembershipsResponse
 	var asanaError AsanaError
-	resp, err := c.httpClient.Do(req, 
+	resp, err := c.httpClient.Do(req,
 		uhttp.WithJSONResponse(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
@@ -232,7 +232,7 @@ func (c *Client) GetTeams(ctx context.Context, getTeamsVars GetTeamsVars) ([]Tea
 
 	var res TeamsResponse
 	var asanaError AsanaError
-	resp, err := c.httpClient.Do(req, 
+	resp, err := c.httpClient.Do(req,
 		uhttp.WithJSONResponse(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
@@ -272,7 +272,7 @@ func (c *Client) GetTeamMemberships(ctx context.Context, getTeamMembershipsVars 
 
 	var res TeamMembershipsResponse
 	var asanaError AsanaError
-	resp, err := c.httpClient.Do(req, 
+	resp, err := c.httpClient.Do(req,
 		uhttp.WithJSONResponse(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
@@ -462,7 +462,7 @@ func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email s
 
 	var result CreateUserResponse
 	var asanaError AsanaError
-	resp, err := c.httpClient.Do(req, 
+	resp, err := c.httpClient.Do(req,
 		uhttp.WithJSONResponse(&result),
 		uhttp.WithErrorResponse(&asanaError),
 	)
@@ -501,7 +501,7 @@ func (c *Client) AddUserToTeam(ctx context.Context, teamId, userId string) error
 	}
 
 	var asanaError AsanaError
-	resp, err := c.httpClient.Do(req, 
+	resp, err := c.httpClient.Do(req,
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
@@ -539,7 +539,7 @@ func (c *Client) RemoveUserToTeam(ctx context.Context, teamId, userId string) er
 	}
 
 	var asanaError AsanaError
-	resp, err := c.httpClient.Do(req, 
+	resp, err := c.httpClient.Do(req,
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
