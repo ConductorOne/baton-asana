@@ -122,7 +122,7 @@ func (c *Client) GetUsers(ctx context.Context, getUsersVars GetUsersVars) ([]Use
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -161,7 +161,7 @@ func (c *Client) GetWorkspace(ctx context.Context, workspaceId string) (Workspac
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return Workspace{}, nil, err
+		return Workspace{}, nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -197,7 +197,7 @@ func (c *Client) GetWorkspaceMemberships(ctx context.Context, getWorkspaceMember
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -237,7 +237,7 @@ func (c *Client) GetTeams(ctx context.Context, getTeamsVars GetTeamsVars) ([]Tea
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -277,7 +277,7 @@ func (c *Client) GetTeamMemberships(ctx context.Context, getTeamMembershipsVars 
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return nil, "", nil, err
+		return nil, "", nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -316,7 +316,7 @@ func (c *Client) AuthCheck(ctx context.Context) ([]WorkspaceMembership, error) {
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return nil, err
+		return nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -354,7 +354,7 @@ func (c *Client) ListAllWorkspaces(ctx context.Context) ([]Workspace, error) {
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return nil, err
+		return nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -387,9 +387,12 @@ func (c *Client) AddUserToWorkspace(ctx context.Context, workspaceId, userId str
 		return err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	var asanaError AsanaError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithErrorResponse(&asanaError),
+	)
 	if err != nil {
-		return err
+		return FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -427,7 +430,7 @@ func (c *Client) RemoveUserToWorkspace(ctx context.Context, workspaceId, userId 
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return err
+		return FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -467,7 +470,7 @@ func (c *Client) InviteUserToWorkspace(ctx context.Context, workspaceId, email s
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return nil, err
+		return nil, FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -505,7 +508,7 @@ func (c *Client) AddUserToTeam(ctx context.Context, teamId, userId string) error
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return err
+		return FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 
@@ -543,7 +546,7 @@ func (c *Client) RemoveUserToTeam(ctx context.Context, teamId, userId string) er
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
-		return err
+		return FormatAsanaError(&asanaError, err)
 	}
 	defer resp.Body.Close()
 

@@ -1,7 +1,9 @@
 package asana
 
 import (
+	"fmt"
 	"net/url"
+	"strings"
 )
 
 func getPath(base string, elem ...string) (*url.URL, error) {
@@ -11,4 +13,96 @@ func getPath(base string, elem ...string) (*url.URL, error) {
 	}
 
 	return url.Parse(fullPath)
+}
+
+// FormatAsanaError formats and returns a detailed error message from an AsanaError.
+// This helper extracts all available error information from Asana API responses.
+// If originalErr is not nil and asanaError has errors, it wraps the original error.
+func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
+	if asanaError == nil || len(asanaError.Errors) == 0 {
+		if originalErr != nil {
+			return originalErr
+		}
+		return fmt.Errorf("unknown error from Asana API")
+	}
+
+	var sb strings.Builder
+	var writeErr error
+
+	// For single errors, format a detailed message with all available fields
+	if len(asanaError.Errors) == 1 {
+		err := asanaError.Errors[0]
+		if _, writeErr = sb.WriteString(fmt.Sprintf("Asana API error: %s", err.Message)); writeErr != nil {
+			if originalErr != nil {
+				// We can't wrap both errors, so we include the original as text
+				return fmt.Errorf("failed to format Asana error: %w (original error: %s)", writeErr, originalErr.Error())
+			}
+			return fmt.Errorf("failed to format Asana error: %w", writeErr)
+		}
+
+		// Include all available fields
+		if err.Help != "" {
+			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Help: %s)", err.Help)); writeErr != nil {
+				if originalErr != nil {
+					return fmt.Errorf("failed to format Asana error: %w (original error: %s)", writeErr, originalErr.Error())
+				}
+				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+			}
+		}
+		if err.Phrase != "" {
+			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Reference: %s)", err.Phrase)); writeErr != nil {
+				if originalErr != nil {
+					return fmt.Errorf("failed to format Asana error: %w (original error: %s)", writeErr, originalErr.Error())
+				}
+				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+			}
+		}
+
+		// Wrap the original error if it exists
+		if originalErr != nil {
+			return fmt.Errorf("%s: %w", sb.String(), originalErr)
+		}
+		return fmt.Errorf("%s", sb.String())
+	}
+
+	// For multiple errors, format them all with all available fields
+	if _, writeErr = sb.WriteString("Multiple Asana API errors:"); writeErr != nil {
+		if originalErr != nil {
+			return fmt.Errorf("failed to format Asana error: %w (original error: %s)", writeErr, originalErr.Error())
+		}
+		return fmt.Errorf("failed to format Asana error: %w", writeErr)
+	}
+
+	for i, err := range asanaError.Errors {
+		if _, writeErr = sb.WriteString(fmt.Sprintf("\n  %d. %s", i+1, err.Message)); writeErr != nil {
+			if originalErr != nil {
+				return fmt.Errorf("failed to format Asana error: %w (original error: %s)", writeErr, originalErr.Error())
+			}
+			return fmt.Errorf("failed to format Asana error: %w", writeErr)
+		}
+
+		// Include all available fields for each error
+		if err.Help != "" {
+			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Help: %s)", err.Help)); writeErr != nil {
+				if originalErr != nil {
+					return fmt.Errorf("failed to format Asana error: %w (original error: %s)", writeErr, originalErr.Error())
+				}
+				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+			}
+		}
+		if err.Phrase != "" {
+			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Reference: %s)", err.Phrase)); writeErr != nil {
+				if originalErr != nil {
+					return fmt.Errorf("failed to format Asana error: %w (original error: %s)", writeErr, originalErr.Error())
+				}
+				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+			}
+		}
+	}
+
+	// Wrap the original error if it exists
+	if originalErr != nil {
+		return fmt.Errorf("%s: %w", sb.String(), originalErr)
+	}
+	return fmt.Errorf("%s", sb.String())
 }
