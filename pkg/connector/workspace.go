@@ -2,13 +2,9 @@ package connector
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/conductorone/baton-asana/pkg/asana"
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
@@ -214,13 +210,10 @@ func (o *workspaceResourceType) Grant(ctx context.Context, resource *v2.Resource
 		workspaceId := entitlement.Resource.Id.Resource
 		userId := resource.Id.Resource
 
+		// Add existing user to workspace (ConductorOne orchestrates user creation)
 		err := o.client.AddUserToWorkspace(ctx, workspaceId, userId)
 		if err != nil {
-			if status.Code(err) == codes.PermissionDenied {
-				return nil, nil, errors.Join(err, errors.New("user does not have permission to add user to workspace or the user was previous removed from the workspace"))
-			}
-
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("failed to add user to workspace: %w", err)
 		}
 
 		workspaceEntitlement, err := getWorkspaceEntitlement(entitlement)

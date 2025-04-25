@@ -49,3 +49,22 @@ type TeamMembership struct {
 type baseMutationBody struct {
 	Data any `json:"data"`
 }
+
+// AsanaError represents the error response from the Asana API.
+type AsanaError struct {
+	Errors []struct {
+		Message string `json:"message"`
+		Help    string `json:"help,omitempty"`
+		Phrase  string `json:"phrase,omitempty"`
+	} `json:"errors"`
+}
+
+// Message implements the uhttp.ErrorResponse interface.
+func (e *AsanaError) Message() string {
+	if len(e.Errors) == 0 {
+		return "Unknown error from Asana API"
+	}
+
+	// Return the first error message
+	return e.Errors[0].Message
+}

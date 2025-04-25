@@ -37,13 +37,14 @@ var (
 )
 
 type Asana struct {
-	client            *asana.Client
-	useServiceAccount bool
+	client                  *asana.Client
+	useServiceAccount       bool
+	accountCreationSettings AccountCreationSettings
 }
 
 func (as *Asana) ResourceSyncers(ctx context.Context) []connectorbuilder.ResourceSyncer {
 	return []connectorbuilder.ResourceSyncer{
-		userBuilder(as.client),
+		userBuilder(as.client, as.accountCreationSettings),
 		workspaceBuilder(as.client, as.useServiceAccount),
 		teamBuilder(as.client),
 	}
@@ -54,6 +55,30 @@ func (as *Asana) Metadata(ctx context.Context) (*v2.ConnectorMetadata, error) {
 	return &v2.ConnectorMetadata{
 		DisplayName: "Asana",
 		Description: "Connector syncing users, teams and workspaces from Asana to Baton",
+		AccountCreationSchema: &v2.ConnectorAccountCreationSchema{
+			FieldMap: map[string]*v2.ConnectorAccountCreationSchema_Field{
+				"email": {
+					DisplayName: "Email",
+					Required:    true,
+					Description: "The email address of the user. This will be used for login.",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "user@example.com",
+					Order:       1,
+				},
+				"workspace_id": {
+					DisplayName: "Workspace ID",
+					Required:    false,
+					Description: "The Asana workspace ID to add the user to. If not provided, the default workspace ID configured for the connector will be used.",
+					Field: &v2.ConnectorAccountCreationSchema_Field_StringField{
+						StringField: &v2.ConnectorAccountCreationSchema_StringField{},
+					},
+					Placeholder: "1234567890",
+					Order:       2,
+				},
+			},
+		},
 	}, nil
 }
 
@@ -90,6 +115,9 @@ func New(ctx context.Context, accessToken string, opts ...Option) (*Asana, error
 
 	c := &Asana{
 		client: asana.NewClient(accessToken, uhttpClient),
+		accountCreationSettings: AccountCreationSettings{
+			DefaultWorkspaceID: "", // This will need to be provided via options
+		},
 	}
 
 	for _, opt := range opts {
@@ -106,5 +134,12 @@ type Option func(*Asana)
 func WithServiceAccount(useServiceAccount bool) Option {
 	return func(a *Asana) {
 		a.useServiceAccount = useServiceAccount
+	}
+}
+
+// WithDefaultWorkspaceID configures the default workspace ID to use for account creation.
+func WithDefaultWorkspaceID(workspaceID string) Option {
+	return func(a *Asana) {
+		a.accountCreationSettings.DefaultWorkspaceID = workspaceID
 	}
 }

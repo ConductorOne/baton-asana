@@ -51,11 +51,21 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 	}
 
 	useServiceAccount := v.GetBool(UseServiceAccountField.FieldName)
+	defaultWorkspaceID := v.GetString(DefaultWorkspaceIDField.FieldName)
+
+	opts := []connector.Option{
+		connector.WithServiceAccount(useServiceAccount),
+	}
+
+	// Add default workspace ID option if provided
+	if defaultWorkspaceID != "" {
+		opts = append(opts, connector.WithDefaultWorkspaceID(defaultWorkspaceID))
+	}
 
 	cb, err := connector.New(
 		ctx,
 		v.GetString(TokenField.FieldName),
-		connector.WithServiceAccount(useServiceAccount),
+		opts...,
 	)
 	if err != nil {
 		l.Error("error creating connector", zap.Error(err))
