@@ -16,7 +16,7 @@ const (
 	scimPatchSchema          = "urn:ietf:params:scim:api:messages:2.0:PatchOp"
 )
 
-// GetScimUsers gets a list of users via the SCIM API
+// GetScimUsers gets a list of users via the SCIM API.
 func (c *Client) GetScimUsers(ctx context.Context, count int, startIndex int, filter string) (*ScimListResponse, error) {
 	usersUrl, err := getPath(ScimBaseUrl, "/Users")
 	if err != nil {
@@ -60,7 +60,7 @@ func (c *Client) GetScimUsers(ctx context.Context, count int, startIndex int, fi
 	return &result, nil
 }
 
-// GetScimUser gets a specific user by ID via the SCIM API
+// GetScimUser gets a specific user by ID via the SCIM API.
 func (c *Client) GetScimUser(ctx context.Context, userID string) (*ScimUser, error) {
 	userUrl, err := getPath(ScimBaseUrl, fmt.Sprintf("/Users/%s", userID))
 	if err != nil {
@@ -92,7 +92,7 @@ func (c *Client) GetScimUser(ctx context.Context, userID string) (*ScimUser, err
 	return &result, nil
 }
 
-// CreateScimUser creates a new user via the SCIM API
+// CreateScimUser creates a new user via the SCIM API.
 func (c *Client) CreateScimUser(ctx context.Context, user *ScimUser) (*ScimUser, error) {
 	userUrl, err := getPath(ScimBaseUrl, "/Users")
 	if err != nil {
@@ -144,7 +144,7 @@ func (c *Client) CreateScimUser(ctx context.Context, user *ScimUser) (*ScimUser,
 	return &result, nil
 }
 
-// UpdateScimUser updates a user via the SCIM API
+// UpdateScimUser updates a user via the SCIM API.
 func (c *Client) UpdateScimUser(ctx context.Context, userID string, user *ScimUser) (*ScimUser, error) {
 	userUrl, err := getPath(ScimBaseUrl, fmt.Sprintf("/Users/%s", userID))
 	if err != nil {
@@ -196,7 +196,7 @@ func (c *Client) UpdateScimUser(ctx context.Context, userID string, user *ScimUs
 	return &result, nil
 }
 
-// PatchScimUser patches a user via the SCIM API
+// PatchScimUser patches a user via the SCIM API.
 func (c *Client) PatchScimUser(ctx context.Context, userID string, operations []ScimPatchOperation) (*ScimUser, error) {
 	userUrl, err := getPath(ScimBaseUrl, fmt.Sprintf("/Users/%s", userID))
 	if err != nil {
@@ -234,7 +234,7 @@ func (c *Client) PatchScimUser(ctx context.Context, userID string, operations []
 	return &result, nil
 }
 
-// DeleteScimUser deletes (deactivates) a user via the SCIM API
+// DeleteScimUser deletes (deactivates) a user via the SCIM API.
 func (c *Client) DeleteScimUser(ctx context.Context, userID string) error {
 	userUrl, err := getPath(ScimBaseUrl, fmt.Sprintf("/Users/%s", userID))
 	if err != nil {
@@ -263,7 +263,7 @@ func (c *Client) DeleteScimUser(ctx context.Context, userID string) error {
 	return nil
 }
 
-// GetScimUserByUsername gets a user by username (email) via the SCIM API
+// GetScimUserByUsername gets a user by username (email) via the SCIM API.
 func (c *Client) GetScimUserByUsername(ctx context.Context, username string) (*ScimUser, error) {
 	filter := fmt.Sprintf("userName eq \"%s\"", username)
 	users, err := c.GetScimUsers(ctx, 1, 0, filter)
@@ -278,7 +278,7 @@ func (c *Client) GetScimUserByUsername(ctx context.Context, username string) (*S
 	return &users.Resources[0], nil
 }
 
-// DeactivateScimUser deactivates a user via the SCIM API
+// DeactivateScimUser deactivates a user via the SCIM API.
 func (c *Client) DeactivateScimUser(ctx context.Context, userID string) (*ScimUser, error) {
 	operations := []ScimPatchOperation{
 		{
@@ -291,7 +291,7 @@ func (c *Client) DeactivateScimUser(ctx context.Context, userID string) (*ScimUs
 	return c.PatchScimUser(ctx, userID, operations)
 }
 
-// ActivateScimUser activates a user via the SCIM API
+// ActivateScimUser activates a user via the SCIM API.
 func (c *Client) ActivateScimUser(ctx context.Context, userID string) (*ScimUser, error) {
 	operations := []ScimPatchOperation{
 		{
@@ -304,7 +304,7 @@ func (c *Client) ActivateScimUser(ctx context.Context, userID string) (*ScimUser
 	return c.PatchScimUser(ctx, userID, operations)
 }
 
-// UpdateScimUserLicense updates a user's license type via the SCIM API
+// UpdateScimUserLicense updates a user's license type via the SCIM API.
 func (c *Client) UpdateScimUserLicense(ctx context.Context, userID string, licenseType string) (*ScimUser, error) {
 	operations := []ScimPatchOperation{
 		{

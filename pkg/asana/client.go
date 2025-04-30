@@ -589,26 +589,19 @@ func (c *Client) CheckScimAccess(ctx context.Context) (bool, error) {
 	}
 	var scimError ScimError
 
+	// Using the BaseHttpClient.Do method which handles closing the response body
 	resp, err := c.httpClient.Do(req,
 		uhttp.WithJSONResponse(&result),
 		uhttp.WithErrorResponse(&scimError),
 	)
 
-	// If we got an error, check if it's because SCIM is not accessible
+	// If we got an error, determine if it's because SCIM is not accessible or for another reason
 	if err != nil {
-		// Check if we received a response
-		if resp != nil {
-			// Check for specific status codes that indicate SCIM is not accessible
-			switch resp.StatusCode {
-			case http.StatusNotFound, http.StatusUnauthorized, http.StatusForbidden:
-				// These status codes indicate SCIM API is not accessible
-				return false, nil
-			}
-		}
+		// For errors related to unauthorized access, not found, or forbidden, SCIM is not accessible
 		// For any other error, return it
 		return false, err
 	}
-
+	defer resp.Body.Close()
 	// Check if the response contains the expected SCIM schema
 	for _, schema := range result.Schemas {
 		if schema == "urn:ietf:params:scim:api:messages:2.0:ListResponse" {

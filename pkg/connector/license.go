@@ -10,7 +10,7 @@ import (
 	rs "github.com/conductorone/baton-sdk/pkg/types/resource"
 )
 
-// Known license types
+// Known license types.
 const (
 	licenseTypeEnterprise = "enterprise"
 	licenseTypeViewOnly   = "view only"

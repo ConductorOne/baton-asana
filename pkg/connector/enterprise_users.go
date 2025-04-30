@@ -340,11 +340,12 @@ func (o *enterpriseUserResourceType) CreateAccount(
 	}
 
 	if scimUser.Name.GivenName != "" || scimUser.Name.FamilyName != "" {
-		if scimUser.Name.GivenName != "" && scimUser.Name.FamilyName != "" {
+		switch {
+		case scimUser.Name.GivenName != "" && scimUser.Name.FamilyName != "":
 			scimUser.Name.Formatted = scimUser.Name.GivenName + " " + scimUser.Name.FamilyName
-		} else if scimUser.Name.GivenName != "" {
+		case scimUser.Name.GivenName != "":
 			scimUser.Name.Formatted = scimUser.Name.GivenName
-		} else {
+		default:
 			scimUser.Name.Formatted = scimUser.Name.FamilyName
 		}
 	}

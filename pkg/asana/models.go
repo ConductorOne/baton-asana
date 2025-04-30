@@ -71,7 +71,7 @@ func (e *AsanaError) Message() string {
 
 // SCIM API Models
 
-// ScimError represents SCIM API error response
+// ScimError represents SCIM API error response.
 type ScimError struct {
 	Schemas []string `json:"schemas"`
 	Detail  string   `json:"detail"`
@@ -86,7 +86,7 @@ func (e *ScimError) Message() string {
 	return "Unknown error from SCIM API"
 }
 
-// ScimAddress represents a SCIM address
+// ScimAddress represents a SCIM address.
 type ScimAddress struct {
 	Locality string `json:"locality,omitempty"`
 	Region   string `json:"region,omitempty"`
@@ -95,28 +95,28 @@ type ScimAddress struct {
 	Primary  bool   `json:"primary,omitempty"`
 }
 
-// ScimPhoneNumber represents a SCIM phone number
+// ScimPhoneNumber represents a SCIM phone number.
 type ScimPhoneNumber struct {
 	Value   string `json:"value,omitempty"`
 	Type    string `json:"type,omitempty"`
 	Primary bool   `json:"primary,omitempty"`
 }
 
-// ScimEmail represents a SCIM email
+// ScimEmail represents a SCIM email.
 type ScimEmail struct {
 	Value   string `json:"value,omitempty"`
 	Type    string `json:"type,omitempty"`
 	Primary bool   `json:"primary,omitempty"`
 }
 
-// ScimName represents a SCIM name
+// ScimName represents a SCIM name.
 type ScimName struct {
 	FamilyName string `json:"familyName,omitempty"`
 	GivenName  string `json:"givenName,omitempty"`
 	Formatted  string `json:"formatted,omitempty"`
 }
 
-// ScimEnterpriseExtension represents the enterprise extension data for a user
+// ScimEnterpriseExtension represents the enterprise extension data for a user.
 type ScimEnterpriseExtension struct {
 	Department     string `json:"department,omitempty"`
 	CostCenter     string `json:"costCenter,omitempty"`
@@ -128,7 +128,7 @@ type ScimEnterpriseExtension struct {
 	} `json:"manager,omitempty"`
 }
 
-// ScimUser represents a user in the SCIM API
+// ScimUser represents a user in the SCIM API.
 type ScimUser struct {
 	ID                string            `json:"id,omitempty"`
 	Schemas           []string          `json:"schemas,omitempty"`
@@ -146,21 +146,21 @@ type ScimUser struct {
 	EnterpriseExtension ScimEnterpriseExtension `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User,omitempty"`
 }
 
-// ScimListResponse represents a list response from the SCIM API
+// ScimListResponse represents a list response from the SCIM API.
 type ScimListResponse struct {
 	Schemas      []string   `json:"schemas"`
 	TotalResults int        `json:"totalResults"`
 	Resources    []ScimUser `json:"Resources"`
 }
 
-// ScimPatchOperation represents a SCIM PATCH operation
+// ScimPatchOperation represents a SCIM PATCH operation.
 type ScimPatchOperation struct {
 	Op    string      `json:"op"`
 	Path  string      `json:"path,omitempty"`
 	Value interface{} `json:"value,omitempty"`
 }
 
-// ScimPatch represents a SCIM PATCH request
+// ScimPatch represents a SCIM PATCH request.
 type ScimPatch struct {
 	Schemas    []string             `json:"schemas"`
 	Operations []ScimPatchOperation `json:"Operations"`
