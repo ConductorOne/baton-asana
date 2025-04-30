@@ -66,19 +66,24 @@ Usage:
 Available Commands:
   capabilities       Get connector capabilities
   completion         Generate the autocompletion script for the specified shell
+  config             Get connector config
   help               Help about any command
 
 Flags:
-      --client-id string       The client ID used to authenticate with ConductorOne ($BATON_CLIENT_ID)
-      --client-secret string   The client secret used to authenticate with ConductorOne ($BATON_CLIENT_SECRET)
-  -f, --file string            The path to the c1z file to sync with ($BATON_FILE) (default "sync.c1z")
-  -h, --help                   help for baton-asana
-      --log-format string      The output format for logs: json, console ($BATON_LOG_FORMAT) (default "json")
-      --log-level string       The log level: debug, info, warn, error ($BATON_LOG_LEVEL) (default "info")
-  -p, --provisioning           This must be set in order for provisioning actions to be enabled. ($BATON_PROVISIONING)
-      --token string           The Asana API token (personal access token or service account token) used to connect to the Asana API. ($BATON_TOKEN)
-      --use-service-account    Set to true if using a service account token instead of a personal access token. ($BATON_USE_SERVICE_ACCOUNT)
-  -v, --version                version for baton-asana
+      --client-id string                 The client ID used to authenticate with ConductorOne ($BATON_CLIENT_ID)
+      --client-secret string             The client secret used to authenticate with ConductorOne ($BATON_CLIENT_SECRET)
+      --default-workspace-id string      The default workspace ID to use for account provisioning ($BATON_DEFAULT_WORKSPACE_ID)
+  -f, --file string                      The path to the c1z file to sync with ($BATON_FILE) (default "sync.c1z")
+  -h, --help                             help for baton-asana
+      --log-format string                The output format for logs: json, console ($BATON_LOG_FORMAT) (default "json")
+      --log-level string                 The log level: debug, info, warn, error ($BATON_LOG_LEVEL) (default "info")
+      --otel-collector-endpoint string   The endpoint of the OpenTelemetry collector to send observability data to ($BATON_OTEL_COLLECTOR_ENDPOINT)
+  -p, --provisioning                     This must be set in order for provisioning actions to be enabled ($BATON_PROVISIONING)
+      --skip-full-sync                   This must be set to skip a full sync ($BATON_SKIP_FULL_SYNC)
+      --ticketing                        This must be set to enable ticketing support ($BATON_TICKETING)
+      --token string                     required: Your Asana API key (Personal Access Token or Service Account Token) ($BATON_TOKEN)
+      --use-service-account              Set to true if using a service account token instead of a personal access token ($BATON_USE_SERVICE_ACCOUNT)
+  -v, --version                          version for baton-asana
 
 Use "baton-asana [command] --help" for more information about a command.
 
