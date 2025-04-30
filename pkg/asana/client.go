@@ -10,7 +10,10 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 )
 
-const BaseUrl = "https://app.asana.com/api/1.0"
+const (
+	BaseUrl     = "https://app.asana.com/api/1.0"
+	ScimBaseUrl = "https://app.asana.com/api/1.0/scim"
+)
 
 type Client struct {
 	httpClient  *uhttp.BaseHttpClient
@@ -553,4 +556,66 @@ func (c *Client) RemoveUserToTeam(ctx context.Context, teamId, userId string) er
 	defer resp.Body.Close()
 
 	return nil
+}
+
+// CheckScimAccess verifies if SCIM API is accessible for this token.
+// It makes a simple query to the SCIM Users endpoint and checks the response.
+func (c *Client) CheckScimAccess(ctx context.Context) (bool, error) {
+	// We'll do a simple query to check if we can access SCIM
+	scimUsersUrl, err := getPath(ScimBaseUrl, "/Users")
+	if err != nil {
+		return false, err
+	}
+
+	// Use a minimal query to reduce response size
+	q := url.Values{}
+	q.Add("count", "1") // Use SCIM protocol pagination parameter to limit response to 1 user
+	scimUsersUrl.RawQuery = q.Encode()
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		scimUsersUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
+	if err != nil {
+		return false, err
+	}
+
+	var result struct {
+		Schemas      []string `json:"schemas"`
+		TotalResults int      `json:"totalResults"`
+	}
+	var scimError ScimError
+
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&result),
+		uhttp.WithErrorResponse(&scimError),
+	)
+
+	// If we got an error, check if it's because SCIM is not accessible
+	if err != nil {
+		// Check if we received a response
+		if resp != nil {
+			// Check for specific status codes that indicate SCIM is not accessible
+			switch resp.StatusCode {
+			case http.StatusNotFound, http.StatusUnauthorized, http.StatusForbidden:
+				// These status codes indicate SCIM API is not accessible
+				return false, nil
+			}
+		}
+		// For any other error, return it
+		return false, err
+	}
+
+	// Check if the response contains the expected SCIM schema
+	for _, schema := range result.Schemas {
+		if schema == "urn:ietf:params:scim:api:messages:2.0:ListResponse" {
+			return true, nil
+		}
+	}
+
+	// If we didn't get the expected schema, SCIM API might not be properly configured
+	return false, nil
 }

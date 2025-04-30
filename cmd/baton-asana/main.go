@@ -52,9 +52,11 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 
 	useServiceAccount := v.GetBool(UseServiceAccountField.FieldName)
 	defaultWorkspaceID := v.GetString(DefaultWorkspaceIDField.FieldName)
+	useScimApi := v.GetBool(UseScimApiField.FieldName)
 
 	opts := []connector.Option{
 		connector.WithServiceAccount(useServiceAccount),
+		connector.WithScimApi(useScimApi),
 	}
 
 	// Add default workspace ID option if provided

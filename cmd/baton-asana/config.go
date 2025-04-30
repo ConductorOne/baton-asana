@@ -24,6 +24,11 @@ var (
 		field.WithDescription("The default workspace ID to use for account provisioning"),
 	)
 
+	UseScimApiField = field.BoolField(
+		"use-scim-api",
+		field.WithDescription("Set to true to use the Asana SCIM API for enterprise license management and user provisioning"),
+	)
+
 	// ConfigurationFields defines the external configuration required for the
 	// connector to run. Note: these fields can be marked as optional or
 	// required.
@@ -31,6 +36,7 @@ var (
 		TokenField,
 		UseServiceAccountField,
 		DefaultWorkspaceIDField,
+		UseScimApiField,
 	}
 
 	// FieldRelationships defines relationships between the fields listed in
@@ -48,5 +54,11 @@ func ValidateConfig(v *viper.Viper) error {
 	if v.GetString(TokenField.FieldName) == "" {
 		return errors.New("token is required")
 	}
+
+	// If SCIM API is enabled, verify that service account is also enabled
+	if v.GetBool(UseScimApiField.FieldName) && !v.GetBool(UseServiceAccountField.FieldName) {
+		return errors.New("service account token is required when SCIM API is enabled")
+	}
+
 	return nil
 }
