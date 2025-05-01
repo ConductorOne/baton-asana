@@ -10,10 +10,17 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 )
 
-const (
+// Default API URLs
+var (
 	BaseUrl     = "https://app.asana.com/api/1.0"
 	ScimBaseUrl = "https://app.asana.com/api/1.0/scim"
 )
+
+// SetBaseUrl sets the base URL for the Asana API
+func SetBaseUrl(url string) {
+	BaseUrl = url
+	ScimBaseUrl = url + "/scim"
+}
 
 type Client struct {
 	httpClient  *uhttp.BaseHttpClient

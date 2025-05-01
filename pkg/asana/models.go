@@ -146,11 +146,36 @@ type ScimUser struct {
 	EnterpriseExtension ScimEnterpriseExtension `json:"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User,omitempty"`
 }
 
+// ScimMember represents a member in a SCIM group or team.
+type ScimMember struct {
+	Value   string `json:"value"`
+	Display string `json:"display,omitempty"`
+	Type    string `json:"type,omitempty"`
+}
+
+// ScimTeam represents a team/group in the SCIM API.
+type ScimTeam struct {
+	ID          string       `json:"id,omitempty"`
+	Schemas     []string     `json:"schemas,omitempty"`
+	DisplayName string       `json:"displayName"`
+	Members     []ScimMember `json:"members,omitempty"`
+	Meta        struct {
+		ResourceType string `json:"resourceType,omitempty"`
+	} `json:"meta,omitempty"`
+}
+
 // ScimListResponse represents a list response from the SCIM API.
 type ScimListResponse struct {
 	Schemas      []string   `json:"schemas"`
 	TotalResults int        `json:"totalResults"`
 	Resources    []ScimUser `json:"Resources"`
+}
+
+// ScimTeamListResponse represents a list response for teams from the SCIM API.
+type ScimTeamListResponse struct {
+	Schemas      []string   `json:"schemas"`
+	TotalResults int        `json:"totalResults"`
+	Resources    []ScimTeam `json:"Resources"`
 }
 
 // ScimPatchOperation represents a SCIM PATCH operation.

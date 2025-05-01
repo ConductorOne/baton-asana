@@ -29,6 +29,11 @@ var (
 		field.WithDescription("Set to true to use the Asana SCIM API for enterprise license management and user provisioning"),
 	)
 
+	AsanaApiUrlField = field.StringField(
+		"asana-api-url",
+		field.WithDescription("Override the default Asana API URL (for testing with a mock server)"),
+	)
+
 	// ConfigurationFields defines the external configuration required for the
 	// connector to run. Note: these fields can be marked as optional or
 	// required.
@@ -37,6 +42,7 @@ var (
 		UseServiceAccountField,
 		DefaultWorkspaceIDField,
 		UseScimApiField,
+		AsanaApiUrlField,
 	}
 
 	// FieldRelationships defines relationships between the fields listed in

@@ -13,6 +13,7 @@ import (
 const (
 	scimUserSchema           = "urn:ietf:params:scim:schemas:core:2.0:User"
 	scimEnterpriseUserSchema = "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+	scimGroupSchema          = "urn:ietf:params:scim:schemas:core:2.0:Group"
 	scimPatchSchema          = "urn:ietf:params:scim:api:messages:2.0:PatchOp"
 )
 
@@ -315,4 +316,214 @@ func (c *Client) UpdateScimUserLicense(ctx context.Context, userID string, licen
 	}
 
 	return c.PatchScimUser(ctx, userID, operations)
+}
+
+// GetScimTeams gets a list of teams via the SCIM API.
+func (c *Client) GetScimTeams(ctx context.Context, count int, startIndex int, filter string) (*ScimTeamListResponse, error) {
+	teamsUrl, err := getPath(ScimBaseUrl, "/Groups")
+	if err != nil {
+		return nil, err
+	}
+
+	q := url.Values{}
+	if count > 0 {
+		q.Add("count", strconv.Itoa(count))
+	}
+	if startIndex > 0 {
+		q.Add("startIndex", strconv.Itoa(startIndex))
+	}
+	if filter != "" {
+		q.Add("filter", filter)
+	}
+	teamsUrl.RawQuery = q.Encode()
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		teamsUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var result ScimTeamListResponse
+	var scimError ScimError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&result),
+		uhttp.WithErrorResponse(&scimError),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return &result, nil
+}
+
+// GetScimTeam gets a specific team by ID via the SCIM API.
+func (c *Client) GetScimTeam(ctx context.Context, teamID string) (*ScimTeam, error) {
+	teamUrl, err := getPath(ScimBaseUrl, fmt.Sprintf("/Groups/%s", teamID))
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodGet,
+		teamUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithAcceptJSONHeader(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var result ScimTeam
+	var scimError ScimError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&result),
+		uhttp.WithErrorResponse(&scimError),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return &result, nil
+}
+
+// CreateScimTeam creates a new team via the SCIM API.
+func (c *Client) CreateScimTeam(ctx context.Context, team *ScimTeam) (*ScimTeam, error) {
+	teamUrl, err := getPath(ScimBaseUrl, "/Groups")
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure schemas are set
+	if team.Schemas == nil {
+		team.Schemas = []string{scimGroupSchema}
+	}
+
+	// Set meta if not present
+	if team.Meta.ResourceType == "" {
+		team.Meta.ResourceType = "Group"
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPost,
+		teamUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(team),
+		uhttp.WithContentTypeJSONHeader(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var result ScimTeam
+	var scimError ScimError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&result),
+		uhttp.WithErrorResponse(&scimError),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return &result, nil
+}
+
+// UpdateScimTeam updates a team via the SCIM API.
+func (c *Client) UpdateScimTeam(ctx context.Context, teamID string, team *ScimTeam) (*ScimTeam, error) {
+	teamUrl, err := getPath(ScimBaseUrl, fmt.Sprintf("/Groups/%s", teamID))
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure schemas are set
+	if team.Schemas == nil {
+		team.Schemas = []string{scimGroupSchema}
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPut,
+		teamUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(team),
+		uhttp.WithContentTypeJSONHeader(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var result ScimTeam
+	var scimError ScimError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&result),
+		uhttp.WithErrorResponse(&scimError),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return &result, nil
+}
+
+// PatchScimTeam patches a team via the SCIM API.
+func (c *Client) PatchScimTeam(ctx context.Context, teamID string, operations []ScimPatchOperation) (*ScimTeam, error) {
+	teamUrl, err := getPath(ScimBaseUrl, fmt.Sprintf("/Groups/%s", teamID))
+	if err != nil {
+		return nil, err
+	}
+
+	patchRequest := ScimPatch{
+		Schemas:    []string{scimPatchSchema},
+		Operations: operations,
+	}
+
+	req, err := c.httpClient.NewRequest(
+		ctx,
+		http.MethodPatch,
+		teamUrl,
+		uhttp.WithBearerToken(c.accessToken),
+		uhttp.WithJSONBody(patchRequest),
+		uhttp.WithContentTypeJSONHeader(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var result ScimTeam
+	var scimError ScimError
+	resp, err := c.httpClient.Do(req,
+		uhttp.WithJSONResponse(&result),
+		uhttp.WithErrorResponse(&scimError),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return &result, nil
+}
+
+// GetScimTeamByDisplayName gets a team by displayName via the SCIM API.
+func (c *Client) GetScimTeamByDisplayName(ctx context.Context, displayName string) (*ScimTeam, error) {
+	filter := fmt.Sprintf("displayName eq \"%s\"", displayName)
+	teams, err := c.GetScimTeams(ctx, 1, 0, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if teams.TotalResults == 0 || len(teams.Resources) == 0 {
+		return nil, fmt.Errorf("team with displayName %s not found", displayName)
+	}
+
+	return &teams.Resources[0], nil
 }
