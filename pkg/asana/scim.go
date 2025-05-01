@@ -166,7 +166,7 @@ func (c *Client) UpdateScimUser(ctx context.Context, userID string, user *ScimUs
 				break
 			}
 		}
-		if !hasEnterpriseSchema {
+		if hasEnterpriseSchema {
 			user.Schemas = append(user.Schemas, scimEnterpriseUserSchema)
 		}
 	}
