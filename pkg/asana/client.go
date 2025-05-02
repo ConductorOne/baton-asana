@@ -10,13 +10,13 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/uhttp"
 )
 
-// Default API URLs
+// Default API URLs.
 var (
 	BaseUrl     = "https://app.asana.com/api/1.0"
 	ScimBaseUrl = "https://app.asana.com/api/1.0/scim"
 )
 
-// SetBaseUrl sets the base URL for the Asana API
+// SetBaseUrl sets the base URL for the Asana API.
 func SetBaseUrl(url string) {
 	BaseUrl = url
 	ScimBaseUrl = url + "/scim"

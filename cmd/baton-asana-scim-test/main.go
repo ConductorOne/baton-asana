@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -24,24 +25,24 @@ const (
 	scimGroupSchema          = "urn:ietf:params:scim:schemas:core:2.0:Group"
 	scimPatchSchema          = "urn:ietf:params:scim:api:messages:2.0:PatchOp"
 	scimListResponseSchema   = "urn:ietf:params:scim:api:messages:2.0:ListResponse"
-	
-	resourceTypeGroup        = "Group"
-	membersPath              = "members"
+
+	resourceTypeGroup = "Group"
+	membersPath       = "members"
 )
 
 // ScimTestServer implements a mock SCIM API server for testing.
 type ScimTestServer struct {
-	users       map[string]asana.ScimUser
-	teams       map[string]asana.ScimTeam
-	workspaces  []asana.Workspace
-	mu          sync.RWMutex
+	users      map[string]asana.ScimUser
+	teams      map[string]asana.ScimTeam
+	workspaces []asana.Workspace
+	mu         sync.RWMutex
 }
 
 // NewScimTestServer creates a new SCIM test server.
 func NewScimTestServer() *ScimTestServer {
 	return &ScimTestServer{
-		users:  make(map[string]asana.ScimUser),
-		teams:  make(map[string]asana.ScimTeam),
+		users: make(map[string]asana.ScimUser),
+		teams: make(map[string]asana.ScimTeam),
 		workspaces: []asana.Workspace{
 			{
 				BaseResource: asana.BaseResource{
@@ -68,7 +69,7 @@ func (s *ScimTestServer) Start(port int) error {
 	// Workspaces endpoints for the connector validation
 	mux.HandleFunc("/api/1.0/workspaces", s.handleWorkspaces)
 	mux.HandleFunc("/api/1.0/workspaces/", s.handleWorkspaceById)
-	
+
 	// Teams REST API endpoint
 	mux.HandleFunc("/api/1.0/teams/", s.handleTeamRestById)
 
@@ -81,8 +82,9 @@ func (s *ScimTestServer) Start(port int) error {
 	mux.HandleFunc("/api/1.0/scim/Groups/", s.handleGroupById)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	// Add some test data
@@ -137,19 +139,19 @@ func (s *ScimTestServer) handleWorkspaceById(w http.ResponseWriter, r *http.Requ
 		s.handleWorkspaceTeams(w, r)
 		return
 	}
-	
+
 	// Check if this is a workspace_memberships request
 	if strings.Contains(path, "/workspace_memberships") {
 		s.handleWorkspaceMemberships(w, r)
 		return
 	}
-	
+
 	// Check for add/remove user endpoints
 	if strings.Contains(path, "/addUser") {
 		s.handleAddUserToWorkspace(w, r)
 		return
 	}
-	
+
 	if strings.Contains(path, "/removeUser") {
 		s.handleRemoveUserFromWorkspace(w, r)
 		return
@@ -248,12 +250,12 @@ func (s *ScimTestServer) handleWorkspaceMemberships(w http.ResponseWriter, r *ht
 			IsAdmin:   false, // Default to regular member
 			IsGuest:   false,
 		}
-		
+
 		// Make the first user an admin for testing
 		if userId == "1" {
 			workspaceMembership.IsAdmin = true
 		}
-		
+
 		memberships = append(memberships, workspaceMembership)
 	}
 
@@ -323,7 +325,7 @@ func (s *ScimTestServer) handleWorkspaceTeams(w http.ResponseWriter, r *http.Req
 	// We don't use offset for the test implementation, but we parse it for completeness
 	_ = r.URL.Query().Get("offset")
 
-	// Convert ScimTeams to Asana Teams 
+	// Convert ScimTeams to Asana Teams
 	var teams []asana.Team
 	for _, scimTeam := range s.teams {
 		team := asana.Team{
@@ -362,24 +364,24 @@ func (s *ScimTestServer) handleWorkspaceTeams(w http.ResponseWriter, r *http.Req
 // handleTeamRestById handles requests for a specific team.
 func (s *ScimTestServer) handleTeamRestById(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	
+
 	// Check if this is a team_memberships request
 	if strings.Contains(path, "/team_memberships") {
 		s.handleTeamMemberships(w, r)
 		return
 	}
-	
+
 	// Check for add/remove user endpoints
 	if strings.Contains(path, "/addUser") {
 		s.handleAddUserToTeam(w, r)
 		return
 	}
-	
+
 	if strings.Contains(path, "/removeUser") {
 		s.handleRemoveUserFromTeam(w, r)
 		return
 	}
-	
+
 	// Regular team GET request
 	if r.Method != http.MethodGet {
 		writeErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -432,7 +434,7 @@ func (s *ScimTestServer) handleAddUserToTeam(w http.ResponseWriter, r *http.Requ
 		writeErrorResponse(w, http.StatusBadRequest, "Invalid URL format")
 		return
 	}
-	
+
 	teamId := pathParts[3]
 
 	// Read the request body
@@ -511,7 +513,7 @@ func (s *ScimTestServer) handleRemoveUserFromTeam(w http.ResponseWriter, r *http
 		writeErrorResponse(w, http.StatusBadRequest, "Invalid URL format")
 		return
 	}
-	
+
 	teamId := pathParts[3]
 
 	// Read the request body
@@ -679,7 +681,7 @@ func (s *ScimTestServer) handleAddUserToWorkspace(w http.ResponseWriter, r *http
 		writeErrorResponse(w, http.StatusBadRequest, "Invalid URL format")
 		return
 	}
-	
+
 	workspaceId := pathParts[3]
 
 	// Read the request body
@@ -718,7 +720,7 @@ func (s *ScimTestServer) handleAddUserToWorkspace(w http.ResponseWriter, r *http
 		// For emails, create a new user
 		newUserId := fmt.Sprintf("%d", len(s.users)+1)
 		nameParts := strings.Split(strings.Split(userId, "@")[0], ".")
-		
+
 		var firstName, lastName string
 		if len(nameParts) > 0 {
 			firstName = nameParts[0]
@@ -732,12 +734,12 @@ func (s *ScimTestServer) handleAddUserToWorkspace(w http.ResponseWriter, r *http
 				lastName = strings.ToUpper(lastName[:1]) + lastName[1:]
 			}
 		}
-		
+
 		formattedName := strings.TrimSpace(firstName + " " + lastName)
 		if formattedName == "" {
 			formattedName = userId
 		}
-		
+
 		newUser := asana.ScimUser{
 			ID:       newUserId,
 			UserName: userId,
@@ -759,9 +761,9 @@ func (s *ScimTestServer) handleAddUserToWorkspace(w http.ResponseWriter, r *http
 				scimUserSchema,
 			},
 		}
-		
+
 		s.users[newUserId] = newUser
-		
+
 		// Return the created user as per Asana API
 		user := asana.User{
 			BaseResource: asana.BaseResource{
@@ -771,11 +773,11 @@ func (s *ScimTestServer) handleAddUserToWorkspace(w http.ResponseWriter, r *http
 			},
 			Email: userId,
 		}
-		
+
 		response := map[string]interface{}{
 			"data": user,
 		}
-		
+
 		writeJSONResponse(w, http.StatusOK, response)
 		return
 	}
@@ -804,7 +806,7 @@ func (s *ScimTestServer) handleRemoveUserFromWorkspace(w http.ResponseWriter, r 
 		writeErrorResponse(w, http.StatusBadRequest, "Invalid URL format")
 		return
 	}
-	
+
 	workspaceId := pathParts[3]
 
 	// Read the request body
@@ -1240,7 +1242,7 @@ func (s *ScimTestServer) handleCreateUser(w http.ResponseWriter, r *http.Request
 			}
 		}
 	}
-	
+
 	// Set default license type if not provided
 	if user.UserType == "" {
 		user.UserType = "enterprise" // Default to enterprise license
@@ -1310,8 +1312,7 @@ func (s *ScimTestServer) handlePatchUser(w http.ResponseWriter, r *http.Request,
 
 	// Apply each operation
 	for _, op := range patchReq.Operations {
-		switch op.Op {
-		case "replace":
+		if op.Op == "replace" {
 			// Handle different attributes based on path
 			if op.Path == "" {
 				// Replace the value directly in the user object
@@ -1674,5 +1675,9 @@ func main() {
 	flag.Parse()
 
 	server := NewScimTestServer()
-	log.Fatal(server.Start(*port))
+	err := server.Start(*port)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Printf("Server failed to start: %v", err)
+		os.Exit(1)
+	}
 }
