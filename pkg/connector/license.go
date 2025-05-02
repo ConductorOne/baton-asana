@@ -2,6 +2,7 @@ package connector
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/conductorone/baton-asana/pkg/asana"
 	v2 "github.com/conductorone/baton-sdk/pb/c1/connector/v2"
@@ -71,9 +72,18 @@ func (o *licenseResourceType) List(ctx context.Context, _ *v2.ResourceId, _ *pag
 	return []*v2.Resource{enterpriseLicense, viewOnlyLicense}, "", nil, nil
 }
 
-func (o *licenseResourceType) Entitlements(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
-	// Licenses don't have entitlements of their own
-	return nil, "", nil, nil
+func (o *licenseResourceType) Entitlements(_ context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Entitlement, string, annotations.Annotations, error) {
+	// Create a license-based entitlement
+	entitlement := &v2.Entitlement{
+		Resource: &v2.Resource{
+			Id: resource.Id,
+		},
+		Id:          resource.Id.Resource,
+		DisplayName: fmt.Sprintf("%s Assignment", resource.DisplayName),
+		Description: fmt.Sprintf("Grants a %s to a user", resource.DisplayName),
+	}
+
+	return []*v2.Entitlement{entitlement}, "", nil, nil
 }
 
 func (o *licenseResourceType) Grants(_ context.Context, _ *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {

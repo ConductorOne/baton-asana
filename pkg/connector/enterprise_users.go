@@ -256,6 +256,7 @@ func (o *enterpriseUserResourceType) Grants(ctx context.Context, resource *v2.Re
 			Id: userResID,
 		},
 		Entitlement: &v2.Entitlement{
+			Id: licenseType,
 			Resource: &v2.Resource{
 				Id: licenseResourceID,
 			},
