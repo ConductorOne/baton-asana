@@ -117,8 +117,25 @@ func (o *licenseResourceType) Grant(ctx context.Context, principal *v2.Resource,
 		return nil, fmt.Errorf("invalid license type: %s", licenseType)
 	}
 
+	// Get the current user to check their license type
+	scimUser, err := o.client.GetScimUser(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user details: %w", err)
+	}
+
+	// If granting view-only to an enterprise user, do nothing (don't downgrade)
+	if licenseType == licenseTypeViewOnly && scimUser.UserType == licenseTypeEnterprise {
+		// User already has a higher license type, no need to downgrade
+		return nil, nil
+	}
+
+	// If user already has the exact license type being granted, return GrantAlreadyExists annotation
+	if scimUser.UserType == licenseType {
+		return annotations.New(&v2.GrantAlreadyExists{}), nil
+	}
+
 	// Update user's license type
-	_, err := o.client.UpdateScimUserLicense(ctx, userID, licenseType)
+	_, err = o.client.UpdateScimUserLicense(ctx, userID, licenseType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to grant license: %w", err)
 	}
@@ -143,6 +160,17 @@ func (o *licenseResourceType) Revoke(ctx context.Context, grant *v2.Grant) (anno
 
 	// Get license type from entitlement resource
 	licenseType := grant.Entitlement.Resource.Id.Resource
+
+	// Get the current user to check their license type
+	scimUser, err := o.client.GetScimUser(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user details: %w", err)
+	}
+
+	// If the user doesn't have this license type, return GrantAlreadyRevoked
+	if scimUser.UserType != licenseType {
+		return annotations.New(&v2.GrantAlreadyRevoked{}), nil
+	}
 
 	// Special behavior based on license type
 	switch licenseType {
