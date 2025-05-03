@@ -91,6 +91,80 @@ func (o *licenseResourceType) Grants(_ context.Context, _ *v2.Resource, _ *pagin
 	return nil, "", nil, nil
 }
 
+// Grant implements connectorbuilder.ResourceGranter interface.
+func (o *licenseResourceType) Grant(ctx context.Context, principal *v2.Resource, entitlement *v2.Entitlement) (annotations.Annotations, error) {
+	// Validate that principal is a user
+	if principal.Id.ResourceType != resourceTypeUser.Id {
+		return nil, fmt.Errorf("principal is not a user")
+	}
+
+	// Validate that entitlement is for a license
+	if entitlement.Resource.Id.ResourceType != resourceTypeLicense.Id {
+		return nil, fmt.Errorf("entitlement is not for a license")
+	}
+
+	// Get user ID from principal resource
+	userID := principal.Id.Resource
+
+	// Get license type from entitlement resource
+	licenseType := entitlement.Resource.Id.Resource
+
+	// Validate license type
+	switch licenseType {
+	case licenseTypeEnterprise, licenseTypeViewOnly:
+		// Valid license types
+	default:
+		return nil, fmt.Errorf("invalid license type: %s", licenseType)
+	}
+
+	// Update user's license type
+	_, err := o.client.UpdateScimUserLicense(ctx, userID, licenseType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to grant license: %w", err)
+	}
+
+	return nil, nil
+}
+
+// Revoke implements connectorbuilder.ResourceRevoker interface.
+func (o *licenseResourceType) Revoke(ctx context.Context, grant *v2.Grant) (annotations.Annotations, error) {
+	// Validate that principal is a user
+	if grant.Principal.Id.ResourceType != resourceTypeUser.Id {
+		return nil, fmt.Errorf("principal is not a user")
+	}
+
+	// Validate that entitlement is for a license
+	if grant.Entitlement.Resource.Id.ResourceType != resourceTypeLicense.Id {
+		return nil, fmt.Errorf("entitlement is not for a license")
+	}
+
+	// Get user ID from principal resource
+	userID := grant.Principal.Id.Resource
+
+	// Get license type from entitlement resource
+	licenseType := grant.Entitlement.Resource.Id.Resource
+
+	// Special behavior based on license type
+	switch licenseType {
+	case licenseTypeEnterprise:
+		// Downgrade to view-only license
+		_, err := o.client.UpdateScimUserLicense(ctx, userID, licenseTypeViewOnly)
+		if err != nil {
+			return nil, fmt.Errorf("failed to downgrade enterprise license to view-only: %w", err)
+		}
+	case licenseTypeViewOnly:
+		// Deprovision user (set active=false)
+		_, err := o.client.DeactivateScimUser(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to deprovision user: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("invalid license type: %s", licenseType)
+	}
+
+	return nil, nil
+}
+
 func licenseBuilder(client *asana.Client) *licenseResourceType {
 	return &licenseResourceType{
 		resourceType: resourceTypeLicense,
