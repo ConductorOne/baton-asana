@@ -351,9 +351,12 @@ func (o *enterpriseUserResourceType) CreateAccount(
 		}
 	}
 
-	// Handle license type if provided
+	// Handle license type if provided, default to "view only" if not specified
 	if licenseType, ok := profile["license_type"].(string); ok && licenseType != "" {
 		scimUser.UserType = licenseType
+	} else {
+		// Default to "view only" license when no license type is specified
+		scimUser.UserType = licenseTypeViewOnly
 	}
 
 	// Create the user via SCIM API
