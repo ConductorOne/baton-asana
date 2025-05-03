@@ -73,12 +73,21 @@ The server comes pre-loaded with test data:
    - Title: Software Engineer
    - Department: Engineering
    - Active: true
+   - License: enterprise
 
 2. Jane Smith (ID: 2)
    - Email: jane.smith@example.com
    - Title: Product Manager
    - Department: Product
    - Active: true
+   - License: view only
+
+3. Alex Johnson (ID: 3)
+   - Email: alex.johnson@example.com
+   - Title: Designer
+   - Department: Design
+   - Active: true
+   - License: none (for testing license grant)
 
 ### Groups
 
@@ -139,6 +148,63 @@ curl -X PATCH "http://localhost:8080/api/1.0/scim/Users/1" \
         "value": {
           "title": "Senior Software Engineer"
         }
+      }
+    ]
+  }'
+```
+
+### Grant a License (PATCH userType)
+
+```bash
+curl -X PATCH "http://localhost:8080/api/1.0/scim/Users/3" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schemas": [
+      "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+    ],
+    "Operations": [
+      {
+        "op": "replace",
+        "path": "userType",
+        "value": "enterprise"
+      }
+    ]
+  }'
+```
+
+### Revoke Enterprise License (Change to View Only)
+
+```bash
+curl -X PATCH "http://localhost:8080/api/1.0/scim/Users/1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schemas": [
+      "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+    ],
+    "Operations": [
+      {
+        "op": "replace",
+        "path": "userType",
+        "value": "view only"
+      }
+    ]
+  }'
+```
+
+### Revoke View Only License (Deprovision User)
+
+```bash
+curl -X PATCH "http://localhost:8080/api/1.0/scim/Users/2" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schemas": [
+      "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+    ],
+    "Operations": [
+      {
+        "op": "replace",
+        "path": "active",
+        "value": false
       }
     ]
   }'

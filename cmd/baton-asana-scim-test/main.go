@@ -911,8 +911,37 @@ func (s *ScimTestServer) addTestData() {
 		},
 	}
 
+	// Add user with no license for testing license grant
+	user3 := asana.ScimUser{
+		ID:       "3",
+		UserName: "alex.johnson@example.com",
+		Name: asana.ScimName{
+			GivenName:  "Alex",
+			FamilyName: "Johnson",
+			Formatted:  "Alex Johnson",
+		},
+		Emails: []asana.ScimEmail{
+			{
+				Value:   "alex.johnson@example.com",
+				Type:    "work",
+				Primary: true,
+			},
+		},
+		Active:   true,
+		Title:    "Designer",
+		UserType: "", // No license
+		Schemas: []string{
+			scimUserSchema,
+			scimEnterpriseUserSchema,
+		},
+		EnterpriseExtension: asana.ScimEnterpriseExtension{
+			Department: "Design",
+		},
+	}
+
 	s.users[user1.ID] = user1
 	s.users[user2.ID] = user2
+	s.users[user3.ID] = user3
 
 	// Add some test teams
 	team1 := asana.ScimTeam{
