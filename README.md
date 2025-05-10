@@ -70,6 +70,7 @@ Available Commands:
   help               Help about any command
 
 Flags:
+      --asana-api-url string             Override the default Asana API URL (for testing with a mock server) ($BATON_ASANA_API_URL)
       --client-id string                 The client ID used to authenticate with ConductorOne ($BATON_CLIENT_ID)
       --client-secret string             The client secret used to authenticate with ConductorOne ($BATON_CLIENT_SECRET)
       --default-workspace-id string      The default workspace ID to use for account provisioning ($BATON_DEFAULT_WORKSPACE_ID)
@@ -82,6 +83,7 @@ Flags:
       --skip-full-sync                   This must be set to skip a full sync ($BATON_SKIP_FULL_SYNC)
       --ticketing                        This must be set to enable ticketing support ($BATON_TICKETING)
       --token string                     required: Your Asana API key (Personal Access Token or Service Account Token) ($BATON_TOKEN)
+      --use-scim-api                     Set to true to use the Asana SCIM API for enterprise license management and user provisioning ($BATON_USE_SCIM_API)
       --use-service-account              Set to true if using a service account token instead of a personal access token ($BATON_USE_SERVICE_ACCOUNT)
   -v, --version                          version for baton-asana
 
