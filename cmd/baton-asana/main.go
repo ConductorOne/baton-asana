@@ -44,10 +44,6 @@ func main() {
 func getConnector(ctx context.Context, ac *cfg.Asana) (types.ConnectorServer, error) {
 	l := ctxzap.Extract(ctx)
 
-	if err := cfg.ValidateConfig(ac); err != nil {
-		return nil, err
-	}
-
 	useServiceAccount := ac.UseServiceAccount
 	defaultWorkspaceID := ac.DefaultWorkspaceId
 	useScimApi := ac.UseScimApi

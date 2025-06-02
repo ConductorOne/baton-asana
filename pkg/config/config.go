@@ -1,8 +1,6 @@
 package config
 
 import (
-	"errors"
-
 	"github.com/conductorone/baton-sdk/pkg/field"
 )
 
@@ -50,9 +48,10 @@ var Config = field.NewConfiguration(
 		AsanaApiUrlField,
 	},
 	field.WithConnectorDisplayName("Asana"),
+	field.WithHelpUrl("/docs/baton/asana"),
 	field.WithIconUrl("/static/app-icons/asana.svg"),
-	field.WithConstraints(field.FieldsRequiredTogether(
-		UseScimApiField,
-		UseServiceAccountField,
+	field.WithConstraints(field.FieldsDependentOn(
+		[]field.SchemaField{UseScimApiField},
+		[]field.SchemaField{UseServiceAccountField},
 	)),
 )
