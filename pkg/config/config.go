@@ -1,49 +1,42 @@
-package main
+package config
 
 import (
 	"errors"
 
 	"github.com/conductorone/baton-sdk/pkg/field"
-	"github.com/spf13/viper"
 )
 
 var (
 	TokenField = field.StringField(
 		"token",
-		field.WithRequired(true),
+		field.WithDisplayName("Personal access token"),
 		field.WithDescription("Your Asana API key (Personal Access Token or Service Account Token)"),
+		field.WithIsSecret(true),
 	)
 
 	UseServiceAccountField = field.BoolField(
 		"use-service-account",
+		field.WithDisplayName("Is service account"),
 		field.WithDescription("Set to true if using a service account token instead of a personal access token"),
 	)
 
 	DefaultWorkspaceIDField = field.StringField(
 		"default-workspace-id",
+		field.WithDisplayName("Default workspace"),
 		field.WithDescription("The default workspace ID to use for account provisioning"),
 	)
 
 	UseScimApiField = field.BoolField(
 		"use-scim-api",
+		field.WithDisplayName("Use SCIM API"),
 		field.WithDescription("Set to true to use the Asana SCIM API for enterprise license management and user provisioning"),
 	)
 
 	AsanaApiUrlField = field.StringField(
 		"asana-api-url",
+		field.WithDisplayName("Asana API URL"),
 		field.WithDescription("Override the default Asana API URL (for testing with a mock server)"),
 	)
-
-	// ConfigurationFields defines the external configuration required for the
-	// connector to run. Note: these fields can be marked as optional or
-	// required.
-	ConfigurationFields = []field.SchemaField{
-		TokenField,
-		UseServiceAccountField,
-		DefaultWorkspaceIDField,
-		UseScimApiField,
-		AsanaApiUrlField,
-	}
 
 	// FieldRelationships defines relationships between the fields listed in
 	// ConfigurationFields that can be automatically validated. For example, a
@@ -52,17 +45,30 @@ var (
 	FieldRelationships = []field.SchemaFieldRelationship{}
 )
 
+//go:generate go run ./gen
+var Config = field.NewConfiguration(
+	[]field.SchemaField{
+		TokenField,
+		UseServiceAccountField,
+		DefaultWorkspaceIDField,
+		UseScimApiField,
+		AsanaApiUrlField,
+	},
+	field.WithConnectorDisplayName("Asana"),
+	field.WithIconUrl("/static/app-icons/asana.svg"),
+)
+
 // ValidateConfig is run after the configuration is loaded, and should return an
 // error if it isn't valid. Implementing this function is optional, it only
 // needs to perform extra validations that cannot be encoded with configuration
 // parameters.
-func ValidateConfig(v *viper.Viper) error {
-	if v.GetString(TokenField.FieldName) == "" {
+func ValidateConfig(ac *Asana) error {
+	if ac.GetString(TokenField.FieldName) == "" {
 		return errors.New("token is required")
 	}
 
 	// If SCIM API is enabled, verify that service account is also enabled
-	if v.GetBool(UseScimApiField.FieldName) && !v.GetBool(UseServiceAccountField.FieldName) {
+	if ac.GetBool(UseScimApiField.FieldName) && !ac.GetBool(UseServiceAccountField.FieldName) {
 		return errors.New("service account token is required when SCIM API is enabled")
 	}
 
