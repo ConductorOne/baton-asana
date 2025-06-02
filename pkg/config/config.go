@@ -11,6 +11,7 @@ var (
 		"token",
 		field.WithDisplayName("Personal access token"),
 		field.WithDescription("Your Asana API key (Personal Access Token or Service Account Token)"),
+		field.WithRequired(true),
 		field.WithIsSecret(true),
 	)
 
@@ -37,12 +38,6 @@ var (
 		field.WithDisplayName("Asana API URL"),
 		field.WithDescription("Override the default Asana API URL (for testing with a mock server)"),
 	)
-
-	// FieldRelationships defines relationships between the fields listed in
-	// ConfigurationFields that can be automatically validated. For example, a
-	// username and password can be required together, or an access token can be
-	// marked as mutually exclusive from the username password pair.
-	FieldRelationships = []field.SchemaFieldRelationship{}
 )
 
 //go:generate go run ./gen
@@ -56,21 +51,8 @@ var Config = field.NewConfiguration(
 	},
 	field.WithConnectorDisplayName("Asana"),
 	field.WithIconUrl("/static/app-icons/asana.svg"),
+	field.WithConstraints(field.FieldsRequiredTogether(
+		UseScimApiField,
+		UseServiceAccountField,
+	)),
 )
-
-// ValidateConfig is run after the configuration is loaded, and should return an
-// error if it isn't valid. Implementing this function is optional, it only
-// needs to perform extra validations that cannot be encoded with configuration
-// parameters.
-func ValidateConfig(ac *Asana) error {
-	if ac.GetString(TokenField.FieldName) == "" {
-		return errors.New("token is required")
-	}
-
-	// If SCIM API is enabled, verify that service account is also enabled
-	if ac.GetBool(UseScimApiField.FieldName) && !ac.GetBool(UseServiceAccountField.FieldName) {
-		return errors.New("service account token is required when SCIM API is enabled")
-	}
-
-	return nil
-}
