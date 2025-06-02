@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/conductorone/baton-sdk/pkg/field"
-	"github.com/spf13/viper"
-
+	cfg "github.com/conductorone/baton-asana/pkg/config"
 	"github.com/conductorone/baton-asana/pkg/connector"
 	"github.com/conductorone/baton-sdk/pkg/config"
 	"github.com/conductorone/baton-sdk/pkg/connectorbuilder"
@@ -27,9 +25,7 @@ func main() {
 		ctx,
 		"baton-asana",
 		getConnector,
-		field.Configuration{
-			Fields: ConfigurationFields,
-		},
+		cfg.Config,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -45,17 +41,13 @@ func main() {
 	}
 }
 
-func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, error) {
+func getConnector(ctx context.Context, ac *cfg.Asana) (types.ConnectorServer, error) {
 	l := ctxzap.Extract(ctx)
 
-	if err := ValidateConfig(v); err != nil {
-		return nil, err
-	}
-
-	useServiceAccount := v.GetBool(UseServiceAccountField.FieldName)
-	defaultWorkspaceID := v.GetString(DefaultWorkspaceIDField.FieldName)
-	useScimApi := v.GetBool(UseScimApiField.FieldName)
-	apiUrl := v.GetString(AsanaApiUrlField.FieldName)
+	useServiceAccount := ac.UseServiceAccount
+	defaultWorkspaceID := ac.DefaultWorkspaceId
+	useScimApi := ac.UseScimApi
+	apiUrl := ac.AsanaApiUrl
 
 	// Set custom API URL if provided
 	if apiUrl != "" {
@@ -75,7 +67,7 @@ func getConnector(ctx context.Context, v *viper.Viper) (types.ConnectorServer, e
 
 	cb, err := connector.New(
 		ctx,
-		v.GetString(TokenField.FieldName),
+		ac.Token,
 		opts...,
 	)
 	if err != nil {
