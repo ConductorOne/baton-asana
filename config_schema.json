@@ -1,12 +1,6 @@
 {
   "fields": [
     {
-      "name": "asana-api-url",
-      "displayName": "Asana API URL",
-      "description": "Override the default Asana API URL (for testing with a mock server)",
-      "stringField": {}
-    },
-    {
       "name": "default-workspace-id",
       "displayName": "Default workspace",
       "description": "The default workspace ID to use for account provisioning",
