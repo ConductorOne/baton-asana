@@ -35,6 +35,8 @@ var (
 		"asana-api-url",
 		field.WithDisplayName("Asana API URL"),
 		field.WithDescription("Override the default Asana API URL (for testing with a mock server)"),
+		field.WithHidden(true),
+		field.WithExportTarget(field.ExportTargetCLIOnly),
 	)
 )
 
