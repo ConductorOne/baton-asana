@@ -24,7 +24,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 		if originalErr != nil {
 			return originalErr
 		}
-		return fmt.Errorf("unknown error from Asana API")
+		return fmt.Errorf("unknown error from Asana API: %w", originalErr)
 	}
 
 	var sb strings.Builder
@@ -37,7 +37,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 			if originalErr != nil {
 				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
-			return fmt.Errorf("failed to format Asana error: %w", writeErr)
+			return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 		}
 
 		// Include all available fields
@@ -46,7 +46,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
-				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
 		}
 		if err.Phrase != "" {
@@ -54,7 +54,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
-				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
 		}
 
@@ -63,7 +63,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 			asanaErr := fmt.Errorf("%s", sb.String())
 			return errors.Join(asanaErr, originalErr)
 		}
-		return fmt.Errorf("%s", sb.String())
+		return errors.Join(fmt.Errorf("%s", sb.String()), originalErr)
 	}
 
 	// For multiple errors, format them all with all available fields
@@ -71,7 +71,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 		if originalErr != nil {
 			return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 		}
-		return fmt.Errorf("failed to format Asana error: %w", writeErr)
+		return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 	}
 
 	for i, err := range asanaError.Errors {
@@ -79,7 +79,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 			if originalErr != nil {
 				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
-			return fmt.Errorf("failed to format Asana error: %w", writeErr)
+			return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 		}
 
 		// Include all available fields for each error
@@ -88,7 +88,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
-				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
 		}
 		if err.Phrase != "" {
@@ -96,7 +96,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
-				return fmt.Errorf("failed to format Asana error: %w", writeErr)
+				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
 		}
 	}
@@ -106,5 +106,5 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 		asanaErr := fmt.Errorf("%s", sb.String())
 		return errors.Join(asanaErr, originalErr)
 	}
-	return fmt.Errorf("%s", sb.String())
+	return errors.Join(fmt.Errorf("%s", sb.String()), originalErr)
 }
