@@ -113,17 +113,7 @@ func (o *teamResourceType) Grants(ctx context.Context, resource *v2.Resource, to
 		return nil, "", nil, err
 	}
 
-	teamTrait, err := rs.GetGroupTrait(resource)
-	if err != nil {
-		return nil, "", nil, err
-	}
-
-	teamId, ok := rs.GetProfileStringValue(teamTrait.Profile, "team_id")
-	if !ok {
-		return nil, "", nil, fmt.Errorf("error fetching team_id from team profile")
-	}
-
-	teamMemberships, offset, _, err := o.client.GetTeamMemberships(ctx, asana.GetTeamMembershipsVars{TeamId: teamId, Limit: ResourcesPageSize, Offset: bag.PageToken()})
+	teamMemberships, offset, _, err := o.client.GetTeamMemberships(ctx, asana.GetTeamMembershipsVars{TeamId: resource.Id.Resource, Limit: ResourcesPageSize, Offset: bag.PageToken()})
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -147,13 +137,13 @@ func (o *teamResourceType) Grants(ctx context.Context, resource *v2.Resource, to
 		default:
 			roleName = teamMember
 		}
-		teamMembershipCopy := teamMembership
-		ur, err := userResource(ctx, &teamMembershipCopy.User, resource.Id)
-		if err != nil {
-			return nil, "", nil, err
+
+		userResID := &v2.ResourceId{
+			ResourceType: resourceTypeUser.Id,
+			Resource:     teamMembership.User.Gid,
 		}
 
-		permissionGrant := grant.NewGrant(resource, roleName, ur.Id, getTeamGrantAnnotations(roleName)...)
+		permissionGrant := grant.NewGrant(resource, roleName, userResID, getTeamGrantAnnotations(roleName)...)
 		rv = append(rv, permissionGrant)
 	}
 

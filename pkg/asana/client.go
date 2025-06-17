@@ -225,7 +225,7 @@ func (c *Client) GetTeams(ctx context.Context, getTeamsVars GetTeamsVars) ([]Tea
 		return nil, "", nil, err
 	}
 	q := url.Values{}
-	q.Add("opt_fields", "name,organization.name,organization.id,user.name,user.email")
+	q.Add("opt_fields", "name,organization.name")
 	q = paginationQuery(q, getTeamsVars.Limit, getTeamsVars.Offset)
 	teamsUrl.RawQuery = q.Encode()
 
@@ -265,7 +265,7 @@ func (c *Client) GetTeamMemberships(ctx context.Context, getTeamMembershipsVars 
 		return nil, "", nil, err
 	}
 	q := url.Values{}
-	q.Add("opt_fields", "team.name,is_limited_access,is_admin,is_guest,user.name,user.email")
+	q.Add("opt_fields", "team.name,is_limited_access,is_admin,is_guest,user.gid")
 	q = paginationQuery(q, getTeamMembershipsVars.Limit, getTeamMembershipsVars.Offset)
 	teamMembershipsUrl.RawQuery = q.Encode()
 
