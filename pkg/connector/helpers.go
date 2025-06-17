@@ -5,7 +5,7 @@ import (
 	"github.com/conductorone/baton-sdk/pkg/pagination"
 )
 
-var ResourcesPageSize = 50
+var ResourcesPageSize = 100
 
 func parsePageToken(i string, resourceID *v2.ResourceId) (*pagination.Bag, error) {
 	b := &pagination.Bag{}
