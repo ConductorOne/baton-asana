@@ -1666,7 +1666,8 @@ func (s *ScimTestServer) handlePatchTeam(w http.ResponseWriter, r *http.Request,
 				}
 			}
 		case "replace":
-			if op.Path == membersPath {
+			switch op.Path {
+			case membersPath:
 				// Replace all members
 				if membersValue, ok := op.Value.([]interface{}); ok {
 					var newMembers []asana.ScimMember
@@ -1687,7 +1688,7 @@ func (s *ScimTestServer) handlePatchTeam(w http.ResponseWriter, r *http.Request,
 					}
 					team.Members = newMembers
 				}
-			} else if op.Path == "displayName" {
+			case "displayName":
 				if displayName, ok := op.Value.(string); ok {
 					team.DisplayName = displayName
 				}
