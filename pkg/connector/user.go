@@ -125,7 +125,7 @@ func (o *userResourceType) CreateAccountCapabilityDetails(ctx context.Context) (
 func (o *userResourceType) CreateAccount(
 	ctx context.Context,
 	accountInfo *v2.AccountInfo,
-	credentialOptions *v2.CredentialOptions,
+	credentialOptions *v2.LocalCredentialOptions,
 ) (
 	connectorbuilder.CreateAccountResponse,
 	[]*v2.PlaintextData,
