@@ -8,10 +8,10 @@ type Asana struct {
 	UseServiceAccount bool `mapstructure:"use-service-account"`
 	DefaultWorkspaceId string `mapstructure:"default-workspace-id"`
 	UseScimApi bool `mapstructure:"use-scim-api"`
-	AsanaApiUrl string `mapstructure:"asana-api-url"`
+	BaseUrl string `mapstructure:"base-url"`
 }
 
-func (c* Asana) findFieldByTag(tagValue string) (any, bool) {
+func (c *Asana) findFieldByTag(tagValue string) (any, bool) {
 	v := reflect.ValueOf(c).Elem() // Dereference pointer to struct
 	t := v.Type()
 
@@ -43,11 +43,13 @@ func (c *Asana) GetString(fieldName string) string {
 	if !ok {
 		return ""
 	}
-	t, ok := v.(string)
-	if !ok {
-		panic("wrong type")
+	if t, ok := v.(string); ok {
+		return t
 	}
-	return t
+	if t, ok := v.([]byte); ok {
+		return string(t)
+	}
+	panic("wrong type")
 }
 
 func (c *Asana) GetInt(fieldName string) int {
