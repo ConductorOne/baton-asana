@@ -1,4 +1,4 @@
-# baton-asana [![Go Reference](https://pkg.go.dev/badge/github.com/conductorone/baton-asana.svg)](https://pkg.go.dev/github.com/conductorone/baton-asana) ![main ci](https://github.com/conductorone/baton-asana/actions/workflows/main.yaml/badge.svg)
+# baton-asana [![Go Reference](https://pkg.go.dev/badge/github.com/conductorone/baton-asana.svg)](https://pkg.go.dev/github.com/conductorone/baton-asana) ![ci](https://github.com/conductorone/baton-asana/actions/workflows/ci.yaml/badge.svg) ![verify](https://github.com/conductorone/baton-asana/actions/workflows/verify.yaml/badge.svg)
 
 `baton-asana` is a connector for Asana built using the [Baton SDK](https://github.com/conductorone/baton-sdk). It
 communicates with the Asana API to sync data about workspaces, users, and teams.
