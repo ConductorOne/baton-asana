@@ -121,6 +121,11 @@
       "displayName": "Use SCIM API",
       "description": "Set to true to use the Asana SCIM API for enterprise license management and user provisioning",
       "boolField": {}
+    },
+    {
+      "name": "base-url",
+      "description": "Override the Asana API URL (for testing)",
+      "stringField": {}
     }
   ],
   "constraints": [
