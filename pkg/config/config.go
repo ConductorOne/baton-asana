@@ -31,12 +31,9 @@ var (
 		field.WithDescription("Set to true to use the Asana SCIM API for enterprise license management and user provisioning"),
 	)
 
-	AsanaApiUrlField = field.StringField(
-		"asana-api-url",
-		field.WithDisplayName("Asana API URL"),
-		field.WithDescription("Override the default Asana API URL (for testing with a mock server)"),
-		field.WithHidden(true),
-		field.WithExportTarget(field.ExportTargetCLIOnly),
+	BaseURLField = field.StringField(
+		"base-url",
+		field.WithDescription("Override the Asana API URL (for testing)"),
 	)
 )
 
@@ -47,7 +44,7 @@ var Config = field.NewConfiguration(
 		UseServiceAccountField,
 		DefaultWorkspaceIDField,
 		UseScimApiField,
-		AsanaApiUrlField,
+		BaseURLField,
 	},
 	field.WithConnectorDisplayName("Asana"),
 	field.WithHelpUrl("/docs/baton/asana"),

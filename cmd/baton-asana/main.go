@@ -47,7 +47,7 @@ func getConnector(ctx context.Context, ac *cfg.Asana) (types.ConnectorServer, er
 	useServiceAccount := ac.UseServiceAccount
 	defaultWorkspaceID := ac.DefaultWorkspaceId
 	useScimApi := ac.UseScimApi
-	apiUrl := ac.AsanaApiUrl
+	apiUrl := ac.BaseUrl
 
 	// Set custom API URL if provided
 	if apiUrl != "" {
