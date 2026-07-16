@@ -33,7 +33,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 	// For single errors, format a detailed message with all available fields
 	if len(asanaError.Errors) == 1 {
 		err := asanaError.Errors[0]
-		if _, writeErr = sb.WriteString(fmt.Sprintf("Asana API error: %s", err.Message)); writeErr != nil {
+		if _, writeErr = fmt.Fprintf(&sb, "Asana API error: %s", err.Message); writeErr != nil {
 			if originalErr != nil {
 				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
@@ -42,7 +42,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 
 		// Include all available fields
 		if err.Help != "" {
-			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Help: %s)", err.Help)); writeErr != nil {
+			if _, writeErr = fmt.Fprintf(&sb, " (Help: %s)", err.Help); writeErr != nil {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
@@ -50,7 +50,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 			}
 		}
 		if err.Phrase != "" {
-			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Reference: %s)", err.Phrase)); writeErr != nil {
+			if _, writeErr = fmt.Fprintf(&sb, " (Reference: %s)", err.Phrase); writeErr != nil {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
@@ -75,7 +75,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 	}
 
 	for i, err := range asanaError.Errors {
-		if _, writeErr = sb.WriteString(fmt.Sprintf("\n  %d. %s", i+1, err.Message)); writeErr != nil {
+		if _, writeErr = fmt.Fprintf(&sb, "\n  %d. %s", i+1, err.Message); writeErr != nil {
 			if originalErr != nil {
 				return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 			}
@@ -84,7 +84,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 
 		// Include all available fields for each error
 		if err.Help != "" {
-			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Help: %s)", err.Help)); writeErr != nil {
+			if _, writeErr = fmt.Fprintf(&sb, " (Help: %s)", err.Help); writeErr != nil {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
@@ -92,7 +92,7 @@ func FormatAsanaError(asanaError *AsanaError, originalErr error) error {
 			}
 		}
 		if err.Phrase != "" {
-			if _, writeErr = sb.WriteString(fmt.Sprintf(" (Reference: %s)", err.Phrase)); writeErr != nil {
+			if _, writeErr = fmt.Fprintf(&sb, " (Reference: %s)", err.Phrase); writeErr != nil {
 				if originalErr != nil {
 					return errors.Join(fmt.Errorf("failed to format Asana error: %w", writeErr), originalErr)
 				}
