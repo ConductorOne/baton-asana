@@ -217,7 +217,7 @@ func (o *enterpriseUserResourceType) Entitlements(_ context.Context, _ *v2.Resou
 
 func (o *enterpriseUserResourceType) Grants(ctx context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
 	// Enterprise users can have license grants
-	profile := resource.GetProfile().AsMap()
+	profile := rs.GetProfile(resource).AsMap()
 	userType, ok := profile["user_type"].(string)
 	if !ok || userType == "" {
 		// No user type means no license

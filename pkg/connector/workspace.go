@@ -159,7 +159,7 @@ func (o *workspaceResourceType) Grants(ctx context.Context, resource *v2.Resourc
 		return nil, "", nil, err
 	}
 
-	workspaceId, ok := rs.GetProfileStringValue(resource.GetProfile(), "workspace_id")
+	workspaceId, ok := rs.GetProfileStringValue(rs.GetProfile(resource), "workspace_id")
 	if !ok {
 		return nil, "", nil, fmt.Errorf("error fetching workspace_id from workspace profile")
 	}
