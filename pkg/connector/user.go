@@ -50,9 +50,7 @@ func userResource(ctx context.Context, user *asana.User, parentResourceID *v2.Re
 	}
 
 	userTraitOptions := []rs.UserTraitOption{
-		rs.WithUserProfile(profile),
 		rs.WithEmail(user.Email, true),
-		rs.WithStatus(v2.UserTrait_Status_STATUS_ENABLED),
 	}
 
 	ret, err := rs.NewUserResource(
@@ -60,6 +58,8 @@ func userResource(ctx context.Context, user *asana.User, parentResourceID *v2.Re
 		resourceTypeUser,
 		user.Gid,
 		userTraitOptions,
+		rs.WithResourceProfile(profile),
+		rs.WithResourceStatus(v2.Status_RESOURCE_STATUS_ENABLED, ""),
 		rs.WithParentResourceID(parentResourceID),
 	)
 	if err != nil {

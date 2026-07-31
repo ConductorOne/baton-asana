@@ -44,13 +44,14 @@ func teamResource(team *asana.Team, parentResourceID *v2.ResourceId) (*v2.Resour
 		"team_name": team.Name,
 	}
 
-	groupTraitOptions := []rs.GroupTraitOption{rs.WithGroupProfile(profile)}
+	groupTraitOptions := []rs.GroupTraitOption{}
 
 	ret, err := rs.NewGroupResource(
 		team.Name,
 		resourceTypeTeam,
 		team.Gid,
 		groupTraitOptions,
+		rs.WithResourceProfile(profile),
 		rs.WithParentResourceID(parentResourceID),
 	)
 	if err != nil {

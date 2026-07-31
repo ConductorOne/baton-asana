@@ -56,10 +56,9 @@ func workspaceResource(ctx context.Context, workspace asana.Workspace) (*v2.Reso
 	profile["workspace_name"] = workspace.Name
 	profile["is_organization"] = workspace.IsOrganization
 
-	groupTrait := []rs.GroupTraitOption{
-		rs.WithGroupProfile(profile),
-	}
+	groupTrait := []rs.GroupTraitOption{}
 	workspaceOptions := []rs.ResourceOption{
+		rs.WithResourceProfile(profile),
 		rs.WithAnnotation(
 			&v2.ChildResourceType{ResourceTypeId: resourceTypeUser.Id},
 			&v2.ChildResourceType{ResourceTypeId: resourceTypeTeam.Id},
@@ -160,12 +159,7 @@ func (o *workspaceResourceType) Grants(ctx context.Context, resource *v2.Resourc
 		return nil, "", nil, err
 	}
 
-	workspaceTrait, err := rs.GetGroupTrait(resource)
-	if err != nil {
-		return nil, "", nil, err
-	}
-
-	workspaceId, ok := rs.GetProfileStringValue(workspaceTrait.Profile, "workspace_id")
+	workspaceId, ok := rs.GetProfileStringValue(rs.GetProfile(resource), "workspace_id")
 	if !ok {
 		return nil, "", nil, fmt.Errorf("error fetching workspace_id from workspace profile")
 	}
