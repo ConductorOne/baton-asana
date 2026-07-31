@@ -122,15 +122,18 @@ func enterpriseUserResource(ctx context.Context, user *asana.ScimUser, parentRes
 	}
 
 	userTraitOptions := []rs.UserTraitOption{
-		rs.WithUserProfile(profile),
 		rs.WithEmail(email, true),
+	}
+
+	resourceOptions := []rs.ResourceOption{
+		rs.WithResourceProfile(profile),
 	}
 
 	// Set user status based on active flag
 	if user.Active {
-		userTraitOptions = append(userTraitOptions, rs.WithStatus(v2.UserTrait_Status_STATUS_ENABLED))
+		resourceOptions = append(resourceOptions, rs.WithResourceStatus(v2.Status_RESOURCE_STATUS_ENABLED, ""))
 	} else {
-		userTraitOptions = append(userTraitOptions, rs.WithStatus(v2.UserTrait_Status_STATUS_DISABLED))
+		resourceOptions = append(resourceOptions, rs.WithResourceStatus(v2.Status_RESOURCE_STATUS_DISABLED, ""))
 	}
 
 	displayName := user.Name.Formatted
@@ -143,7 +146,7 @@ func enterpriseUserResource(ctx context.Context, user *asana.ScimUser, parentRes
 		resourceTypeUser,
 		user.ID,
 		userTraitOptions,
-		rs.WithParentResourceID(parentResourceID),
+		append(resourceOptions, rs.WithParentResourceID(parentResourceID))...,
 	)
 	if err != nil {
 		return nil, err
@@ -214,12 +217,7 @@ func (o *enterpriseUserResourceType) Entitlements(_ context.Context, _ *v2.Resou
 
 func (o *enterpriseUserResourceType) Grants(ctx context.Context, resource *v2.Resource, _ *pagination.Token) ([]*v2.Grant, string, annotations.Annotations, error) {
 	// Enterprise users can have license grants
-	userTrait, err := rs.GetUserTrait(resource)
-	if err != nil {
-		return nil, "", nil, fmt.Errorf("failed to get user trait: %w", err)
-	}
-
-	profile := userTrait.Profile.AsMap()
+	profile := resource.GetProfile().AsMap()
 	userType, ok := profile["user_type"].(string)
 	if !ok || userType == "" {
 		// No user type means no license

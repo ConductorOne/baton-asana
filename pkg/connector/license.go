@@ -46,9 +46,8 @@ func licenseResource(ctx context.Context, licenseType string) (*v2.Resource, err
 		displayName,
 		resourceTypeLicense,
 		licenseType,
-		[]rs.RoleTraitOption{
-			rs.WithRoleProfile(profile),
-		},
+		[]rs.RoleTraitOption{},
+		rs.WithResourceProfile(profile),
 	)
 	if err != nil {
 		return nil, err
