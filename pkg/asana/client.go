@@ -32,6 +32,12 @@ type UsersResponse struct {
 	NextPage PaginationData `json:"next_page"`
 }
 
+// HasPaginationData satisfies uhttp.PaginatedResponse so uhttp.WithPaginationData
+// fails the request when Asana returns a page without its next_page key.
+func (r *UsersResponse) HasPaginationData() bool {
+	return r.NextPage.IsPresent()
+}
+
 type WorkspaceResponse struct {
 	Data Workspace `json:"data"`
 }
@@ -45,9 +51,21 @@ type WorkspaceMembershipsResponse struct {
 	NextPage PaginationData        `json:"next_page"`
 }
 
+// HasPaginationData satisfies uhttp.PaginatedResponse so uhttp.WithPaginationData
+// fails the request when Asana returns a page without its next_page key.
+func (r *WorkspaceMembershipsResponse) HasPaginationData() bool {
+	return r.NextPage.IsPresent()
+}
+
 type TeamMembershipsResponse struct {
 	Data     []TeamMembership `json:"data"`
 	NextPage PaginationData   `json:"next_page"`
+}
+
+// HasPaginationData satisfies uhttp.PaginatedResponse so uhttp.WithPaginationData
+// fails the request when Asana returns a page without its next_page key.
+func (r *TeamMembershipsResponse) HasPaginationData() bool {
+	return r.NextPage.IsPresent()
 }
 
 type GetUsersVars struct {
@@ -77,6 +95,12 @@ type GetTeamsVars struct {
 type TeamsResponse struct {
 	Data     []Team         `json:"data"`
 	NextPage PaginationData `json:"next_page"`
+}
+
+// HasPaginationData satisfies uhttp.PaginatedResponse so uhttp.WithPaginationData
+// fails the request when Asana returns a page without its next_page key.
+func (r *TeamsResponse) HasPaginationData() bool {
+	return r.NextPage.IsPresent()
 }
 
 // CreateUserResponse is the response from the Asana API when creating a user.
@@ -128,7 +152,7 @@ func (c *Client) GetUsers(ctx context.Context, getUsersVars GetUsersVars) ([]Use
 	var res UsersResponse
 	var asanaError AsanaError
 	resp, err := c.httpClient.Do(req,
-		uhttp.WithJSONResponse(&res),
+		uhttp.WithPaginationData(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
@@ -136,11 +160,7 @@ func (c *Client) GetUsers(ctx context.Context, getUsersVars GetUsersVars) ([]Use
 	}
 	defer resp.Body.Close()
 
-	if (res.NextPage != PaginationData{}) {
-		return res.Data, res.NextPage.Offset, resp, nil
-	}
-
-	return res.Data, "", resp, nil
+	return res.Data, res.NextPage.Offset, resp, nil
 }
 
 // GetWorkspace returns details of a single workspace.
@@ -203,7 +223,7 @@ func (c *Client) GetWorkspaceMemberships(ctx context.Context, getWorkspaceMember
 	var res WorkspaceMembershipsResponse
 	var asanaError AsanaError
 	resp, err := c.httpClient.Do(req,
-		uhttp.WithJSONResponse(&res),
+		uhttp.WithPaginationData(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
@@ -211,11 +231,7 @@ func (c *Client) GetWorkspaceMemberships(ctx context.Context, getWorkspaceMember
 	}
 	defer resp.Body.Close()
 
-	if (res.NextPage != PaginationData{}) {
-		return res.Data, res.NextPage.Offset, resp, nil
-	}
-
-	return res.Data, "", resp, nil
+	return res.Data, res.NextPage.Offset, resp, nil
 }
 
 // GetTeams returns all teams for a single workspace.
@@ -243,7 +259,7 @@ func (c *Client) GetTeams(ctx context.Context, getTeamsVars GetTeamsVars) ([]Tea
 	var res TeamsResponse
 	var asanaError AsanaError
 	resp, err := c.httpClient.Do(req,
-		uhttp.WithJSONResponse(&res),
+		uhttp.WithPaginationData(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
@@ -251,11 +267,7 @@ func (c *Client) GetTeams(ctx context.Context, getTeamsVars GetTeamsVars) ([]Tea
 	}
 	defer resp.Body.Close()
 
-	if (res.NextPage != PaginationData{}) {
-		return res.Data, res.NextPage.Offset, resp, nil
-	}
-
-	return res.Data, "", resp, nil
+	return res.Data, res.NextPage.Offset, resp, nil
 }
 
 // GetTeamMemberships returns all team memberships for a single team.
@@ -283,7 +295,7 @@ func (c *Client) GetTeamMemberships(ctx context.Context, getTeamMembershipsVars 
 	var res TeamMembershipsResponse
 	var asanaError AsanaError
 	resp, err := c.httpClient.Do(req,
-		uhttp.WithJSONResponse(&res),
+		uhttp.WithPaginationData(&res),
 		uhttp.WithErrorResponse(&asanaError),
 	)
 	if err != nil {
@@ -291,11 +303,7 @@ func (c *Client) GetTeamMemberships(ctx context.Context, getTeamMembershipsVars 
 	}
 	defer resp.Body.Close()
 
-	if (res.NextPage != PaginationData{}) {
-		return res.Data, res.NextPage.Offset, resp, nil
-	}
-
-	return res.Data, "", resp, nil
+	return res.Data, res.NextPage.Offset, resp, nil
 }
 
 // AuthCheck returns workspace permissions of an authenticated user.

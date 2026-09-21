@@ -1,5 +1,10 @@
 package asana
 
+import (
+	"bytes"
+	"encoding/json"
+)
+
 type BaseResource struct {
 	Gid          string `json:"gid"`
 	Name         string `json:"name"`
@@ -32,8 +37,39 @@ type WorkspaceMembership struct {
 	IsGuest      bool      `json:"is_guest"`
 }
 
+// PaginationData is Asana's next_page object. Asana always sends the next_page key on a
+// list response - an object while more pages remain, null on the last one - so present
+// records whether the key was there at all, which is what separates the last page from a
+// response that dropped its cursor.
 type PaginationData struct {
 	Offset string `json:"offset,omitempty"`
+
+	present bool
+}
+
+// UnmarshalJSON records that Asana sent the next_page key. json calls it for an explicit
+// null as well, and not at all when the key is absent.
+func (p *PaginationData) UnmarshalJSON(data []byte) error {
+	p.present = true
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+
+	type paginationData PaginationData // sheds this method so json does not recurse
+	var decoded paginationData
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	decoded.present = true
+	*p = PaginationData(decoded)
+
+	return nil
+}
+
+// IsPresent reports whether Asana sent the next_page key at all.
+func (p PaginationData) IsPresent() bool {
+	return p.present
 }
 
 type TeamMembership struct {
